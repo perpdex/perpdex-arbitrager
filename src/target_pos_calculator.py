@@ -30,29 +30,35 @@ class TargetPosCalculator:
         self._position_getter = position_getter
         self._config = config
 
-    def target_pos(self):
+        assert config.open_threshold > config.close_threshold > 0
+        assert config.threshold_step > 0
+        assert config.lot_size > 0
+
+    def target_pos(self) -> float:
         spread = self._spread_getter.spread()
         current_pos = self._position_getter.current_position()
 
-        # pos_open
-        n_lot = np.ceil(
-            (
-                abs(spread) - self._config.open_threshold
-            ) / self._config.threshold_step
-        )
-        n_lot = max(0, n_lot)
+        # close all pos when close threshold satisfied
+        target_pos = 0.0
+        if current_pos < 0 and spread > -self._config.close_threshold:
+            target_pos = 0.0
+        elif current_pos > 0 and spread < self._config.close_threshold:
+            target_pos = 0.0
+        else:
+            target_pos = current_pos
+        
+        # open when abs(spread) > op_thresh
+        if abs(spread) > self._config.open_threshold:
+            n_lot = np.ceil(
+                (
+                    abs(spread) - self._config.open_threshold
+                ) / self._config.threshold_step
+            )
+            pos = n_lot * self._config.lot_size * np.sign(spread)
 
-        current_pos_sign = 1 if current_pos >= 0 else -1
-        target_pos_op = max(
-            n_lot * self._config.lot_size,
-            abs(current_pos)
-        ) * current_pos_sign
+            if spread >= 0:
+                target_pos = max(pos, target_pos)
+            else:
+                target_pos = min(pos, target_pos)
 
-        # pos_close
-        target_pos_cl = 0 if abs(spread) < self._config.close_threshold else current_pos
-
-        # target_pos = current_post + diff_op + diff_cl
-        # diff_op = target_pos_op - current_pos
-        # diff_cl = target_pos_cl - current_pos
-        print(target_pos_op, target_pos_cl, current_pos)
-        return target_pos_op + target_pos_cl - current_pos
+        return target_pos
