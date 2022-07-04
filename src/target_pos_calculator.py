@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import numpy as np
 
 
@@ -11,6 +12,7 @@ class IPositionGetter:
         pass
 
 
+@dataclass
 class TargetPosCalculatorConfig:
     open_threshold: float
     close_threshold: float
@@ -40,10 +42,11 @@ class TargetPosCalculator:
         )
         n_lot = max(0, n_lot)
 
+        current_pos_sign = 1 if current_pos >= 0 else -1
         target_pos_op = max(
             n_lot * self._config.lot_size,
             abs(current_pos)
-        ) * np.sign(spread)
+        ) * current_pos_sign
 
         # pos_close
         target_pos_cl = 0 if abs(spread) < self._config.close_threshold else current_pos
@@ -51,4 +54,5 @@ class TargetPosCalculator:
         # target_pos = current_post + diff_op + diff_cl
         # diff_op = target_pos_op - current_pos
         # diff_cl = target_pos_cl - current_pos
+        print(target_pos_op, target_pos_cl, current_pos)
         return target_pos_op + target_pos_cl - current_pos
