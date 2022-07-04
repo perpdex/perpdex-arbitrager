@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import dataclass
 
 
 class ITargetPosCalculator:
@@ -11,6 +12,7 @@ class IPositionChaser:
         pass
 
 
+@dataclass
 class ArbitragerConfig:
     trade_loop_sec: int
 
