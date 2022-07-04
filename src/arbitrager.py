@@ -6,7 +6,7 @@ class ITargetPosCalculator:
         pass
 
 
-class IPositioner:
+class IPositionChaser:
     async def execute(self, target_size: float):
         pass
 
@@ -20,13 +20,13 @@ class Arbitrager:
             self,
             config: ArbitragerConfig,
             target_pos_calculator: ITargetPosCalculator,
-            positioner1: IPositioner,
-            positioner2: IPositioner,
+            position_chaser1: IPositionChaser,
+            position_chaser2: IPositionChaser,
     ):
         self._config = config
         self._target_pos_calculator = target_pos_calculator
-        self._positioner1 = positioner1
-        self._positioner2 = positioner2
+        self._position_chaser1 = position_chaser1
+        self._position_chaser2 = position_chaser2
 
         self._task: asyncio.Task = None
     
@@ -41,8 +41,8 @@ class Arbitrager:
             target_pos = self._target_pos_calculator.target_pos()
 
             await asyncio.gather(
-                self._positioner1.execute(target_size=target_pos),
-                self._positioner2.execute(target_size=target_pos * -1)
+                self._position_chaser1.execute(target_size=target_pos),
+                self._position_chaser2.execute(target_size=target_pos * -1)
             )
 
             await asyncio.sleep(self._config.trade_loop_sec)

@@ -13,7 +13,7 @@ from src.exchanges.perpdex import (PerpdexOrderer, PerpdexPositionGetter,
 from src.spread_calculator import TakeTakeSpreadCalculator
 from src.target_pos_calculator import (TargetPosCalculator,
                                        TargetPosCalculatorConfig)
-from src.trade_executer import TargetTakePositioner, TargetTakePositionerConfig
+from position_chaser import TakePositionChaser, TakePositionChaserConfig
 
 
 # resolve dependencies
@@ -47,25 +47,25 @@ def _init_ftx_perpdex_arb_bot() -> Arbitrager:
     )
 
     # 1: ftx, 2: perpdex
-    positioner1 = TargetTakePositioner(
+    position_chaser1 = TakePositionChaser(
         position_getter=_ftx_position_getter,
         taker=FtxOrderer(),
-        config=TargetTakePositionerConfig(symbol=_ftx_symbol),
+        config=TakePositionChaserConfig(symbol=_ftx_symbol),
     )
 
-    positioner2 = TargetTakePositioner(
+    position_chaser2 = TakePositionChaser(
         position_getter=PerpdexPositionGetter(
             w3=_w3,
             config=PerpdexPositionGetterConfig(symbol=_perpdex_symbol),
         ),
         taker=PerpdexOrderer(w3=_w3),
-        config=TargetTakePositionerConfig(symbol=_perpdex_symbol),
+        config=TakePositionChaserConfig(symbol=_perpdex_symbol),
     )
 
     return Arbitrager(
         target_pos_calculator=target_pos_calculator,
-        positioner1=positioner1,
-        positioner2=positioner2,
+        position_chaser1=position_chaser1,
+        position_chaser2=position_chaser2,
         config=ArbitragerConfig(trade_loop_sec=1),
     )
 

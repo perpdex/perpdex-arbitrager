@@ -13,14 +13,14 @@ class ITaker:
         pass
 
 
-class TargetTakePositionerConfig:
+class TakePositionChaserConfig:
     symbol: str
 
 
-class TargetTakePositioner:
+class TakePositionChaser:
     def __init__(
             self,
-            config: TargetTakePositionerConfig,
+            config: TakePositionChaserConfig,
             position_getter: IPositionGetter,
             taker: ITaker) -> None:
         self._config = config
@@ -58,7 +58,7 @@ class IMaker:
         pass
 
 
-class TargetMakePositioner:
+class MakeChaser:
     def __init__(
             self,
             position_getter: IPositionGetter,
