@@ -1,0 +1,7 @@
+autopep8==1.6.0
+flake8==4.0.1
+pytest==7.1.1
+pytest-asyncio==0.18.3
+pytest-mock==3.7.0
+python-dotenv==0.20.0
+PyYAML==6.0

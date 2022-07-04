@@ -1,0 +1,10 @@
+{
+    "name": "perpdex-liquidator",
+    "dockerComposeFile": "../docker-compose.yml",
+    "service": "py",
+    "workspaceFolder": "/app",
+    "extensions": [
+        "ms-python.python",
+        "ms-toolsai.jupyter-keymap"
+    ]
+}
