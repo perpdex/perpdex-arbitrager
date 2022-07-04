@@ -1,0 +1,27 @@
+name: python
+on:
+  push:
+    branches:
+      - '**'
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        persist-credentials: false
+        submodules: recursive
+
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        docker-compose run --rm py flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        docker-compose run --rm py flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Run tests
+      working-directory: ./
+      run: |
+        docker-compose run --rm py python -m pytest tests
