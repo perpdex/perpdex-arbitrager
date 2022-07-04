@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 
 class IPositionGetter:
     def current_position(self) -> float:
@@ -13,6 +15,7 @@ class ITaker:
         pass
 
 
+@dataclass
 class TakePositionChaserConfig:
     symbol: str
 
@@ -34,11 +37,11 @@ class TakePositionChaser:
         if diff == 0:
             return
 
-        side_int = int(diff > 0)
+        side_int = 1 if diff > 0 else -1
         self._taker.post_market_order(
             symbol=self._config.symbol,
             side_int=side_int,
-            side=abs(diff),
+            size=abs(diff),
         )
 
 
