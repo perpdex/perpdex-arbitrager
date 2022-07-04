@@ -14,9 +14,9 @@ class TakeTakeSpreadCalculator:
 
     def spread(self) -> float:
         # short 2, long 1
-        spread1 = self._get_bid2_ask1_spread_rate()
+        spread1 = self._bid2_ask1_spread_rate()
         # short 1, long 2
-        spread2 = self._get_bid1_ask2_spread_rate()
+        spread2 = self._bid1_ask2_spread_rate()
 
         # choose larger one
         if spread1 > spread2:
