@@ -1,7 +1,7 @@
 {
-    "name": "perpdex-liquidator",
-    "dockerComposeFile": "../docker-compose.yml",
-    "service": "py",
+    "name": "perpdex-arbitrager",
+    "dockerComposeFile": "docker-compose-vscode.yml",
+    "service": "py-vs",
     "workspaceFolder": "/app",
     "extensions": [
         "ms-python.python",

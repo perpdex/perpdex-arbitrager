@@ -1,0 +1,22 @@
+version: "3.8"
+services:
+  py-vs:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    working_dir: /app
+    volumes:
+      - ../:/app
+    environment:
+      - USER_PRIVATE_KEY
+      - WEB3_PROVIDER_URI
+      - WEB3_NETWORK_NAME
+      - FTX_PUBLIC_API_KEY
+      - FTX_SECRET_PRIVATE_KEY
+      - PERPDEX_CONTRACT_ABI_JSON_DIRPATH
+      - PERPDEX_ORACLE_ABI_JSON_DIRPATH
+    tty: true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "32m"
