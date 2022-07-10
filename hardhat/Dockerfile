@@ -3,7 +3,3 @@ RUN apk update && \
     apk add git curl
 
 WORKDIR /app
-COPY package.json /app
-COPY yarn.lock /app
-
-RUN yarn install

@@ -29,13 +29,12 @@ jobs:
     
     - name: Build deps
       shell: bash
-      working-directory: ./
+      working-directory: ./deps/perpdex-contract/
       run: |
-        cd deps/perpdex-contract/
         npm install
         npm run build
-
+    
     - name: Run tests
       working-directory: ./
       run: |
-        docker-compose --env-file=.env.test run --rm py-test python -m pytest tests
+        docker compose --env-file=.env.test run --rm py-test python -m pytest tests

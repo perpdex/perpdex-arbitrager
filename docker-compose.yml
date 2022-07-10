@@ -31,12 +31,12 @@ services:
     volumes:
       - ./hardhat:/app
       - ./deps:/deps
-    command: yarn hardhat node
+    command: sh -c "yarn install && yarn hardhat node"
     expose:
       - 8545  # hardhat localhost default port
     healthcheck:
       test: curl -f http://localhost:8545 || exit 1
-      interval: 2s
+      interval: 3s
       timeout: 5s
       retries: 15
       start_period: 15s
