@@ -21,7 +21,21 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         docker-compose run --rm py flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
+    # build deps
+    - name: Use Node.js 16.x
+      uses: actions/setup-node@v2
+      with:
+        node-version: 16.x
+    
+    - name: Build deps
+      shell: bash
+      working-directory: ./
+      run: |
+        cd deps/perpdex-contract/
+        npm install
+        npm run build
+
     - name: Run tests
       working-directory: ./
       run: |
-        docker-compose run --rm py python -m pytest tests
+        docker-compose --env-file=.env.test run --rm py-test python -m pytest tests
