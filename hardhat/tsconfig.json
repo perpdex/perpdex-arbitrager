@@ -1,0 +1,7 @@
+{
+  "include": ["hardhat/hardhat.config.ts", "deployments", "hardhat/deploy", "./test", "hardhat/contracts/99_perpdex.ts"],
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+  }
+}
