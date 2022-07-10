@@ -53,22 +53,22 @@ class FtxOrderer:
     def __init__(self):
         self._ftx = init_ccxt_ftx()
 
-    def post_limit_order(self, symbol: str, side_int: int, size: float) -> dict:
+    def post_market_order(self, symbol: str, side_int: int, size: float) -> dict:
         return self._ftx.create_order(symbol, 'market', _to_side_str(side_int), size)
 
-    def post_market_order(self, symbol: str, side_int: int, size: float, price: float) -> dict:
+    def post_limit_order(self, symbol: str, side_int: int, size: float, price: float) -> dict:
         return self._ftx.create_order(symbol, 'limit', _to_side_str(side_int), size, price)
 
     def cancel_limit_order(self, symbol: str, order_id: str) -> dict:
         return self._ftx.cancel_order(order_id)
 
 
-class FtxPositionGetterConfig:
+class FtxRestPositionGetterConfig:
     symbol: str
 
 
-class FtxPositionGetter:
-    def __init__(self, config: FtxPositionGetterConfig):
+class FtxRestPositionGetter:
+    def __init__(self, config: FtxRestPositionGetterConfig):
         self._ftx = init_ccxt_ftx()
         self._config = config
 

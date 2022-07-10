@@ -4,12 +4,12 @@ from logging import getLogger
 
 from src.arbitrager import Arbitrager, ArbitragerConfig
 from src.contracts.utils import get_w3
-from src.exchanges.ftx import (FtxOrderer, FtxPositionGetter,
-                               FtxPositionGetterConfig, FtxRestTicker,
+from src.exchanges.ftx import (FtxOrderer, FtxRestPositionGetter,
+                               FtxRestPositionGetterConfig, FtxRestTicker,
                                FtxRestTickerConfig)
 from src.exchanges.perpdex import (PerpdexOrderer, PerpdexPositionGetter,
-                                   PerpdexPositionGetterConfig, PerpdexTicker,
-                                   PerpdexTickerConfig)
+                                   PerpdexPositionGetterConfig, PerpdexContractTicker,
+                                   PerpdexContractTickerConfig)
 from src.spread_calculator import TakeTakeSpreadCalculator
 from src.target_pos_calculator import (TargetPosCalculator,
                                        TargetPosCalculatorConfig)
@@ -21,8 +21,8 @@ def _init_ftx_perpdex_arb_bot() -> Arbitrager:
     _ftx_symbol = 'BTC/USD'
     _perpdex_symbol = 'BTC'
 
-    _ftx_position_getter = FtxPositionGetter(
-        config=FtxPositionGetterConfig(symbol=_ftx_symbol),
+    _ftx_position_getter = FtxRestPositionGetter(
+        config=FtxRestPositionGetterConfig(symbol=_ftx_symbol),
     )
 
     _w3 = get_w3(
@@ -37,9 +37,9 @@ def _init_ftx_perpdex_arb_bot() -> Arbitrager:
             price_getter1=FtxRestTicker(
                 config=FtxRestTickerConfig(symbol=_ftx_symbol),
             ),
-            price_getter2=PerpdexTicker(
+            price_getter2=PerpdexContractTicker(
                 w3=_w3,
-                config=PerpdexTickerConfig(symbol=_perpdex_symbol),
+                config=PerpdexContractTickerConfig(symbol=_perpdex_symbol),
             ),
         ),
         position_getter=_ftx_position_getter,
