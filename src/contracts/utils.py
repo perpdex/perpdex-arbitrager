@@ -12,5 +12,6 @@ def get_w3(network_name: str, web3_provider_uri: str, user_private_key: str = No
 
     if user_private_key is not None:
         user_account = Account().from_key(user_private_key)
+        w3.eth.default_account = user_account.address
         w3.middleware_onion.add(construct_sign_and_send_raw_middleware(user_account))
     return w3

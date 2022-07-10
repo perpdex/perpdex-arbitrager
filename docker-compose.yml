@@ -9,9 +9,37 @@ services:
       - .:/app
     environment:
       - USER_PRIVATE_KEY
+      - WEB3_PROVIDER_URI
+      - WEB3_NETWORK_NAME
+      - PERPDEX_CONTRACT_ABI_JSON_DIRPATH
     tty: true
     logging:
       driver: "json-file"
       options:
         max-size: "32m"
+  
+  py-test:
+    <<: *py
+    depends_on:
+      perpdex-hardhat:
+        condition: service_healthy
+    
+  perpdex-hardhat:
+    build:
+      context: ./hardhat
+      dockerfile: Dockerfile
+    volumes:
+      - ./hardhat:/app
+      - ./deps:/deps
+    command: yarn hardhat node
+    expose:
+      - 8545  # hardhat localhost default port
+    healthcheck:
+      test: curl -f http://localhost:8545 || exit 1
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 15s
 
+volumes:
+  unmount_vol:

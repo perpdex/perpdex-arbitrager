@@ -1,0 +1,3 @@
+[submodule "deps/perpdex-contract"]
+	path = deps/perpdex-contract
+	url = https://github.com/perpdex/perpdex-contract.git

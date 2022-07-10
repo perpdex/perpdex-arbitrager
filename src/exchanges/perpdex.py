@@ -1,26 +1,31 @@
 import json
-import os
 import time
+from dataclasses import dataclass
 
 import web3
 
-# Perpdex uses 96 bit for fractional number
-Q96: int = ...
-MAX_INT: int = int(web3.constants.MAX_INT, base=16)
+Q96: int = 0x1000000000000000000000000  # same as 1 << 96
+MAX_UINT: int = int(web3.constants.MAX_INT, base=16)
+DECIMALS: int = 18
 
 
-class PerpdexTickerConfig:
+@dataclass
+class PerpdexContractTickerConfig:
+    market_contract_abi_json_filepath: str
     update_limit_sec: float = 0.5
 
 
-class PerpdexTicker:
-    def __init__(self, w3, config: PerpdexTickerConfig):
+class PerpdexContractTicker:
+    def __init__(self, w3, config: PerpdexContractTickerConfig):
         self._w3 = w3
         self._config = config
 
-        self._market_contract = _get_contract_from_perpdex_dir(w3, 'PerpdexMarket.json')
+        self._market_contract = _get_contract_from_abi_json(
+            w3,
+            config.market_contract_abi_json_filepath,
+        )
 
-        self._mark_price
+        self._mark_price = 0.0
         self._last_ts = 0.0
 
     def bid_price(self):
@@ -38,29 +43,56 @@ class PerpdexTicker:
         return self._mark_price
 
 
-class PerpdexOrderer:
-    def __init__(self, w3):
-        self._w3 = w3
+@dataclass
+class PerpdexOrdererConfig:
+    market_contract_abi_json_filepaths: list
+    exchange_contract_abi_json_filepath: str
 
-        self._exchange_contract = _get_contract_from_perpdex_dir(w3, 'PerpdexExchange.json')
+
+class PerpdexOrderer:
+    def __init__(self, w3, config: PerpdexOrdererConfig):
+        self._w3 = w3
+        self._config = config
+
+        self._exchange_contract = _get_contract_from_abi_json(
+            w3,
+            config.exchange_contract_abi_json_filepath,
+        )
+
+        self._symbol_to_market_address: dict = {}
+        for filepath in config.market_contract_abi_json_filepaths:
+            contract = _get_contract_from_abi_json(w3, filepath)
+            symbol = contract.functions.symbol().call()
+            self._symbol_to_market_address[symbol] = contract.address
 
     def post_market_order(self, symbol: str, side_int: int, size: float):
-        market = _symbol_to_market_address(symbol)
+        assert side_int != 0
+
+        if symbol not in self._symbol_to_market_address:
+            raise ValueError(f"market address not initialized: {symbol=}")
+
+        # get markt address from symbol string
+        market = self._symbol_to_market_address[symbol]
+
+        # calculate amount with decimals from size
+        amount = int(size * (10 ** DECIMALS))
 
         tx_hash = self._exchange_contract.functions.trade(dict(
-            trader=self._w3.eth.default_account.address,
+            trader=self._w3.eth.default_account,
             market=market,
-            is_base_to_quote=side_int < 0,
-            is_exact_input=side_int < 0,
-            amount=size,
-            oppositeAmountBound=0,
-            deadline=MAX_INT,
+            isBaseToQuote=(side_int < 0),
+            isExactInput=(side_int < 0),  # same as isBaseToQuote
+            amount=amount,
+            oppositeAmountBound=0 if (side_int < 0) else MAX_UINT,
+            deadline=MAX_UINT,
         )).transact()
         self._w3.eth.wait_for_transaction_receipt(tx_hash)
+    
 
-
+@dataclass
 class PerpdexPositionGetterConfig:
-    symbol: str
+    market_contract_abi_json_filepath: str
+    exchange_contract_abi_json_filepath: str
 
 
 class PerpdexPositionGetter:
@@ -68,32 +100,26 @@ class PerpdexPositionGetter:
         self._w3 = w3
         self._config = config
     
-        self._exchange_contract = _get_contract_from_perpdex_dir(w3, 'PerpdexExchange.json')
+        self._market_contract = _get_contract_from_abi_json(
+            w3,
+            config.market_contract_abi_json_filepath,
+        )
+        self._exchange_contract = _get_contract_from_abi_json(
+            w3,
+            config.exchange_contract_abi_json_filepath,
+        )
 
-    def current_position(self):
-        market = _symbol_to_market_address(self._config.symbol)
-        base_share = self._perpdex_exchange.functions.getOpenPositionShare(dict(
-            trader=self._w3.eth.default_account.address,
-            market=market,
-        )).call()
-        return base_share
+    def current_position(self) -> float:
+        base_share = self._exchange_contract.functions.getPositionShare(
+            self._w3.eth.default_account,
+            self._market_contract.address,
+        ).call()
+        return base_share / (10 ** DECIMALS)
 
 
-def _symbol_to_market_address(symbol: str) -> str:
-    ret = _get_abi_json_from_perpdex_dir(f'PerpdexMarket{symbol}.json')
-    return ret['address']
-
-
-def _get_abi_json_from_perpdex_dir(filename: str):
-    filepath = os.path.join(
-        os.environ['PERPDEX_ABI_JSON_DIRPATH'], filename)
+def _get_contract_from_abi_json(w3, filepath: str):
     with open(filepath) as f:
-        ret = json.load(f)
-    return ret
-
-
-def _get_contract_from_perpdex_dir(w3, filename: str):
-    abi = _get_abi_json_from_perpdex_dir(filename)
+        abi = json.load(f)
     contract = w3.eth.contract(
         address=abi['address'],
         abi=abi['abi'],
