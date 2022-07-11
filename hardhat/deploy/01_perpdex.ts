@@ -14,7 +14,7 @@ async function _getPerpdexArtifact(contractName: string) {
 }
 
 async function _deployMarket(deploy, deployer, symbol: string, exchangeAddress: string) {
-    const priceFeedBase = await deploy("TestPerpdexPriceFeedBase"+ symbol, {
+    const priceFeedBase = await deploy("PerpdexPriceFeedBase"+ symbol, {
         from: deployer,
         contract: 'TestPerpdexPriceFeed',
         args: [],
@@ -22,7 +22,7 @@ async function _deployMarket(deploy, deployer, symbol: string, exchangeAddress: 
         autoMine: true,
     })
 
-    const priceFeedQuote = await deploy("TestPerpdexPriceFeedQuote"+ symbol, {
+    const priceFeedQuote = await deploy("PerpdexPriceFeedQuote"+ symbol, {
         from: deployer,
         contract: 'TestPerpdexPriceFeed',
         args: [],
@@ -31,7 +31,7 @@ async function _deployMarket(deploy, deployer, symbol: string, exchangeAddress: 
     })
  
     const marketArtifact = await _getPerpdexArtifact("TestPerpdexMarket")
-    return await deploy('TestPerpdexMarket' + symbol, {
+    return await deploy('PerpdexMarket' + symbol, {
         from: deployer,
         contract: {
             abi: marketArtifact.abi,
@@ -52,7 +52,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const exchangeArtifact = await _getPerpdexArtifact("TestPerpdexExchange")
     const settlementTokenAddress = hre.ethers.constants.AddressZero;
 
-    const exchange = await deploy('TestPerpdexExchange', {
+    const exchange = await deploy('PerpdexExchange', {
         from: deployer,
         contract: {
             abi: exchangeArtifact.abi,
@@ -65,7 +65,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // market
     const marketBTC = await _deployMarket(deploy, deployer, "BTC", exchange.address)
     await execute(
-        "TestPerpdexExchange",
+        "PerpdexExchange",
         {
             from: deployer,
             log: true,

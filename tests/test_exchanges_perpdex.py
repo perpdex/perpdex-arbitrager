@@ -19,7 +19,7 @@ def w3():
 @pytest.fixture
 def market_filepath():
     return os.path.join(
-        os.environ['PERPDEX_CONTRACT_ABI_JSON_DIRPATH'], 'TestPerpdexMarketBTC.json')
+        os.environ['PERPDEX_CONTRACT_ABI_JSON_DIRPATH'], 'PerpdexMarketBTC.json')
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def market_contract(w3, market_filepath):
 @pytest.fixture
 def exchange_filepath():
     return os.path.join(
-        os.environ['PERPDEX_CONTRACT_ABI_JSON_DIRPATH'], 'TestPerpdexExchange.json')
+        os.environ['PERPDEX_CONTRACT_ABI_JSON_DIRPATH'], 'PerpdexExchange.json')
 
 
 @pytest.fixture
@@ -94,7 +94,7 @@ def before_after(w3, market_contract, exchange_contract):
 
 def test_perpdex_contract_ticker(w3):
     contfact_filepath = os.path.join(
-        os.environ['PERPDEX_CONTRACT_ABI_JSON_DIRPATH'], 'TestPerpdexMarketBTC.json')
+        os.environ['PERPDEX_CONTRACT_ABI_JSON_DIRPATH'], 'PerpdexMarketBTC.json')
     ticker = perpdex.PerpdexContractTicker(
         w3=w3,
         config=perpdex.PerpdexContractTickerConfig(

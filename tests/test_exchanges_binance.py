@@ -86,7 +86,7 @@ def test_binance_orderer():
 
 def _set_leverageBrackets(ccxt_binance, symbol: str):
     """
-    not supported on testnet. copy & paste BTC/USD pair result of mainnet
+    not supported on testnet. copy & paste BTC/USDT pair result of mainnet
     https://binance-docs.github.io/apidocs/delivery/en/#notional-bracket-for-pair-user_data
     """
     if symbol == 'BTC/USDT':
