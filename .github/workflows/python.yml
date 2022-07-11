@@ -37,4 +37,10 @@ jobs:
     - name: Run tests
       working-directory: ./
       run: |
-        docker compose run --rm py-test python -m pytest tests
+        docker compose run --rm py-test python -m pytest --cov=. --cov-branch --cov-report=html
+
+    - name: Archive code coverage results
+      uses: actions/upload-artifact@v3
+      with:
+        name: code-coverage-report
+        path: htmlcov
