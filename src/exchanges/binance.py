@@ -1,4 +1,3 @@
-import os
 import time
 from dataclasses import dataclass
 
@@ -6,16 +5,16 @@ import ccxt
 
 
 @dataclass
-class BinanceRestTickerConfig:
+class BinanceLinearRestTickerConfig:
     symbol: str
     update_limit_sec: float = 0.5
 
 
-class BinanceRestTicker:
-    def __init__(self, config: BinanceRestTickerConfig):
+class BinanceLinearRestTicker:
+    def __init__(self, config: BinanceLinearRestTickerConfig):
         self._config = config
 
-        self._binance = ccxt.binance({'options': {'defaultType': 'delivery'}})
+        self._binance = ccxt.binance({'options': {'defaultType': 'future'}})
 
         self._last_ts1 = 0.0
         self._last_ts2 = 0.0
@@ -49,4 +48,38 @@ class BinanceRestTicker:
             self._last_bid_ask = ret[self._config.symbol]
         self._last_ts2 = time.time()
         return self._last_bid_ask
+
+
+@dataclass
+class BinanceLinearRestPositionGetterConfig:
+    api_key: str
+    secret: str
+    symbol: str
+
+
+class BinanceLinearRestPositionGetter:
+    """
+    - https://github.com/ccxt/ccxt/blob/master/python/ccxt/binance.py
+    - https://docs.ccxt.com/en/latest/manual.html#position-structure
+    """
+    def __init__(self, config: BinanceLinearRestPositionGetterConfig):
+        self._binance = ccxt.binance({
+            'apiKey': config.api_key,
+            'secret': config.secret,
+            'options': {'defaultType': 'future'},
+        })
+        self._config = config
+
+    def current_position(self) -> float:
+        positions = self._binance.fetch_positions(symbols=[self._config.symbol])
+        if len(positions) == 0:
+            return 0.0
+        
+        total = 0.0
+        for pos in positions:
+            base_size = pos['contracts']
+            side_sign = 1 if pos['side'] == 'long' else -1
+            total += base_size * side_sign
+        return total
+   
 

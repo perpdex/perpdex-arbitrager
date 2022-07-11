@@ -84,7 +84,7 @@ class FtxRestPositionGetter:
         
         total = 0.0
         for pos in positions:
-            base_size = pos['contract']
+            base_size = pos['contracts']
             side_sign = 1 if pos['side'] == 'long' else -1
             total += base_size * side_sign
         return total

@@ -12,6 +12,8 @@ services:
       - WEB3_PROVIDER_URI
       - WEB3_NETWORK_NAME
       - PERPDEX_CONTRACT_ABI_JSON_DIRPATH
+      - BINANCE_API_KEY
+      - BINANCE_SECRET
     tty: true
     logging:
       driver: "json-file"
