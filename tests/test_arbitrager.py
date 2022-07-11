@@ -12,10 +12,14 @@ async def test_arbitrager(mocker):
     mocked_target_pos_calculator.target_pos.return_value = target_pos
 
     mocked_chaser1 = mocker.MagicMock()
-    mocked_chaser1.execute.return_value = asyncio.Future()
+    future1 = asyncio.Future()
+    future1.set_result(None)
+    mocked_chaser1.execute.return_value = future1
 
     mocked_chaser2 = mocker.MagicMock()
-    mocked_chaser2.execute.return_value = asyncio.Future()
+    future2 = asyncio.Future()
+    future2.set_result(None)
+    mocked_chaser2.execute.return_value = future2
 
     arb = Arbitrager(
         target_pos_calculator=mocked_target_pos_calculator,
@@ -27,6 +31,9 @@ async def test_arbitrager(mocker):
     # assert health check ok
     arb.start()
     assert arb.health_check() is True
+
+    # wait 1 sec to make sure trade loop executed
+    await asyncio.sleep(1)
 
     # force revert the running task
     arb._task.cancel()
