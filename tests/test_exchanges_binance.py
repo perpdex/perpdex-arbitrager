@@ -41,6 +41,49 @@ def test_binance_rest_position_getter():
     assert type(getter.current_position()) is float
 
 
+@skip_if_secret_not_set
+def test_binance_orderer():
+    orderer = binance.BinanceLinearOrderer(
+        config=binance.BinanceLinearOrdererConfig(
+            api_key=os.environ["BINANCE_API_KEY"],
+            secret=os.environ["BINANCE_SECRET"],
+        )
+    )
+    # configuration for testnet
+    orderer._binance.set_sandbox_mode(True)
+
+    getter = binance.BinanceLinearRestPositionGetter(
+        config=binance.BinanceLinearRestPositionGetterConfig(
+            api_key=os.environ["BINANCE_API_KEY"],
+            secret=os.environ["BINANCE_SECRET"],
+            symbol='BTC/USDT',
+        )
+    )
+    # configuration for testnet
+    _set_leverageBrackets(getter._binance, symbol='BTC/USDT')
+    getter._binance.set_sandbox_mode(True)
+
+    # long
+    pos0 = getter.current_position()
+    orderer.post_market_order(symbol='BTC/USDT', side_int=1, size=0.1)
+    pos1 = getter.current_position()
+
+    assert pos0 + 0.1 == pytest.approx(pos1)
+
+    # short
+    orderer.post_market_order(symbol='BTC/USDT', side_int=-1, size=0.1)
+    pos2 = getter.current_position()
+
+    assert pos1 - 0.1 == pytest.approx(pos2)
+
+    # teardown
+    if pos2 == pytest.approx(0):
+        return
+    orderer.post_market_order(symbol='BTC/USDT',
+                              side_int=1 if pos2 < 0 else -1,
+                              size=abs(pos2))
+
+
 def _set_leverageBrackets(ccxt_binance, symbol: str):
     """
     not supported on testnet. copy & paste BTC/USD pair result of mainnet

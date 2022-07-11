@@ -83,3 +83,38 @@ class BinanceLinearRestPositionGetter:
         return total
    
 
+@dataclass
+class BinanceLinearOrdererConfig:
+    api_key: str
+    secret: str
+
+
+class BinanceLinearOrderer:
+    """
+    - https://github.com/ccxt/ccxt/blob/master/python/ccxt/binance.py
+    - https://docs.ccxt.com/en/latest/manual.html#order-structure
+    """
+    def __init__(self, config: BinanceLinearOrdererConfig):
+        self._binance = ccxt.binance({
+            'apiKey': config.api_key,
+            'secret': config.secret,
+            'options': {'defaultType': 'future'},
+        })
+
+    def post_market_order(self, symbol: str, side_int: int, size: float) -> dict:
+        return self._binance.create_order(symbol, 'market', _to_side_str(side_int), size)
+
+    def post_limit_order(self, symbol: str, side_int: int, size: float, price: float) -> dict:
+        return self._binance.create_order(symbol, 'limit', _to_side_str(side_int), size, price)
+
+    def cancel_limit_order(self, symbol: str, order_id: str) -> dict:
+        return self._binance.cancel_order(order_id)
+
+
+def _to_side_str(side_int: int):
+    if side_int > 0:
+        return 'buy'
+    if side_int < 0:
+        return 'sell'
+    raise ValueError
+ 
