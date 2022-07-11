@@ -4,12 +4,12 @@ import numpy as np
 
 class ISpreadGetter:
     def spread(self) -> float:
-        pass
+        ...
 
 
 class IPositionGetter:
     def current_position(self) -> float:
-        pass
+        ...
 
 
 @dataclass

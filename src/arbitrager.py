@@ -4,12 +4,12 @@ from dataclasses import dataclass
 
 class ITargetPosCalculator:
     def target_pos(self) -> float:
-        pass
+        ...
 
 
 class IPositionChaser:
     async def execute(self, target_size: float):
-        pass
+        ...
 
 
 @dataclass

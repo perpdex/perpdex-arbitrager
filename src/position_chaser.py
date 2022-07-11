@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 class IPositionGetter:
     def current_position(self) -> float:
-        pass
+        ...
 
 
 class ITaker:
@@ -12,7 +12,7 @@ class ITaker:
             symbol: str,
             side_int: int,
             size: float) -> str:
-        pass
+        ...
 
 
 @dataclass
@@ -55,10 +55,10 @@ class IMaker:
             side_int: int,
             size: float,
             price: float) -> str:
-        pass
+        ...
 
     def cancel_limit_order(self, order_id: str):
-        pass
+        ...
 
 
 class MakeChaser:

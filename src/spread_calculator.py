@@ -1,10 +1,10 @@
 
 class IPriceGetter:
     def bid_price(self) -> float:
-        pass
+        ...
     
     def ask_price(self) -> float:
-        pass
+        ...
 
 
 class TakeTakeSpreadCalculator:
