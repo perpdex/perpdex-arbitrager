@@ -1,0 +1,46 @@
+name: python
+on:
+  push:
+    branches:
+      - '**'
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        persist-credentials: false
+        submodules: recursive
+
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        docker-compose run --rm py flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        docker-compose run --rm py flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    # build deps
+    - name: Use Node.js 16.x
+      uses: actions/setup-node@v2
+      with:
+        node-version: 16.x
+    
+    - name: Build deps
+      shell: bash
+      working-directory: ./deps/perpdex-contract/
+      run: |
+        npm install
+        npm run build
+    
+    - name: Run tests
+      working-directory: ./
+      run: |
+        docker compose run --rm py-test python -m pytest --cov=. --cov-branch --cov-report=html
+
+    - name: Archive code coverage results
+      uses: actions/upload-artifact@v3
+      with:
+        name: code-coverage-report
+        path: htmlcov

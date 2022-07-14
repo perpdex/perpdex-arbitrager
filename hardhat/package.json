@@ -1,0 +1,21 @@
+{
+  "name": "perpdex-arbitrager",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "GPL-3.0-or-later",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@^0.3.0-beta.13",
+    "ethers": "^5.5.4",
+    "hardhat": "^2.10.0",
+    "hardhat-deploy": "^0.11.11",
+    "ts-node": "^10.8.2"
+  },
+  "dependencies": {
+    "typescript": "^4.7.4"
+  }
+}

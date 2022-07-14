@@ -1,0 +1,4 @@
+*.pyc
+.coverage
+.DS_Store
+.env

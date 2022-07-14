@@ -1,0 +1,21 @@
+version: "3.8"
+services:
+  py-vs:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    working_dir: /app
+    volumes:
+      - ../:/app
+    environment:
+      - USER_PRIVATE_KEY
+      - WEB3_PROVIDER_URI
+      - WEB3_NETWORK_NAME
+      - PERPDEX_CONTRACT_ABI_JSON_DIRPATH
+      - BINANCE_API_KEY
+      - BINANCE_SECRET
+    tty: true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "32m"
