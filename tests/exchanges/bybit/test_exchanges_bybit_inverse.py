@@ -14,8 +14,8 @@ skip_if_secret_not_set = pytest.mark.skipif(
 
 
 def test_bybit_inverse_rest_ticker():
-    ticker = bybit.BybitInverseRestTicker(
-        config=bybit.BybitInverseRestTickerConfig(
+    ticker = bybit.inverse.BybitInverseRestTicker(
+        config=bybit.inverse.BybitInverseRestTickerConfig(
             symbol='BTCUSD',
             update_limit_sec=0.0001
         )
@@ -29,8 +29,8 @@ def test_bybit_inverse_rest_ticker():
 @pytest.mark.asyncio
 @skip_if_secret_not_set
 async def test_bybit_inverse_ws_ticker():
-    ticker = bybit.BybitInverseWebsocketTicker(
-        config=bybit.BybitInverseWebsocketTickerConfig(
+    ticker = bybit.inverse.BybitInverseWebsocketTicker(
+        config=bybit.inverse.BybitInverseWebsocketTickerConfig(
             symbol='BTCUSD',
             testnet=True,
         )
@@ -40,8 +40,8 @@ async def test_bybit_inverse_ws_ticker():
     await asyncio.sleep(2)
 
     # rarely exectuted on testnet, so trade bymyself
-    orderer = bybit.BybitInverseOrderer(
-        config=bybit.BybitInverseOrdererConfig(
+    orderer = bybit.inverse.BybitInverseOrderer(
+        config=bybit.inverse.BybitInverseOrdererConfig(
             api_key=os.environ["BYBIT_API_KEY"],
             secret=os.environ["BYBIT_SECRET"],
         )
@@ -59,8 +59,8 @@ async def test_bybit_inverse_ws_ticker():
 
 @skip_if_secret_not_set
 def test_bybit_inverse_rest_position_getter():
-    getter = bybit.BybitInverseRestPositionGetter(
-        config=bybit.BybitInverseRestPositionGetterConfig(
+    getter = bybit.inverse.BybitInverseRestPositionGetter(
+        config=bybit.inverse.BybitInverseRestPositionGetterConfig(
             api_key=os.environ["BYBIT_API_KEY"],
             secret=os.environ["BYBIT_SECRET"],
             symbol='BTCUSD',
@@ -75,8 +75,8 @@ def test_bybit_inverse_rest_position_getter():
 @pytest.mark.asyncio
 @skip_if_secret_not_set
 async def test_bybit_inverse_websocket_position_getter():
-    getter = bybit.BybitInverseWebsocketPositionGetter(
-        config=bybit.BybitInverseWebsocketPositionGetterConfig(
+    getter = bybit.inverse.BybitInverseWebsocketPositionGetter(
+        config=bybit.inverse.BybitInverseWebsocketPositionGetterConfig(
             api_key=os.environ['BYBIT_API_KEY'],
             secret=os.environ['BYBIT_SECRET'],
             symbol='BTCUSD',
@@ -85,8 +85,8 @@ async def test_bybit_inverse_websocket_position_getter():
     )
     await asyncio.sleep(2)
 
-    orderer = bybit.BybitInverseOrderer(
-        config=bybit.BybitInverseOrdererConfig(
+    orderer = bybit.inverse.BybitInverseOrderer(
+        config=bybit.inverse.BybitInverseOrdererConfig(
             api_key=os.environ["BYBIT_API_KEY"],
             secret=os.environ["BYBIT_SECRET"],
         )
@@ -115,8 +115,8 @@ async def test_bybit_inverse_websocket_position_getter():
 
 @skip_if_secret_not_set
 def test_bybit_inverse_orderer():
-    orderer = bybit.BybitInverseOrderer(
-        config=bybit.BybitInverseOrdererConfig(
+    orderer = bybit.inverse.BybitInverseOrderer(
+        config=bybit.inverse.BybitInverseOrdererConfig(
             api_key=os.environ["BYBIT_API_KEY"],
             secret=os.environ["BYBIT_SECRET"],
         )
@@ -124,8 +124,8 @@ def test_bybit_inverse_orderer():
     # configuration for testnet
     orderer._bybit.set_sandbox_mode(True)
 
-    getter = bybit.BybitInverseRestPositionGetter(
-        config=bybit.BybitInverseRestPositionGetterConfig(
+    getter = bybit.inverse.BybitInverseRestPositionGetter(
+        config=bybit.inverse.BybitInverseRestPositionGetterConfig(
             api_key=os.environ["BYBIT_API_KEY"],
             secret=os.environ["BYBIT_SECRET"],
             symbol='BTCUSD',
