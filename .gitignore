@@ -2,3 +2,5 @@
 .coverage
 .DS_Store
 .env
+.python-version
+.venv
