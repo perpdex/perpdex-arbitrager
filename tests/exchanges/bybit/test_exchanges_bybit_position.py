@@ -86,5 +86,3 @@ async def test_bybit_ws_position_getter(symbol, lot_size):
     orderer.post_market_order(symbol=symbol, side_int=1 if pos < 0 else -1, size=abs(pos))
     await asyncio.sleep(0.100)
     assert getter.current_position() == 0
-
-    getter.finish()
