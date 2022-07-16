@@ -14,6 +14,8 @@ services:
       - PERPDEX_CONTRACT_ABI_JSON_DIRPATH
       - BINANCE_API_KEY
       - BINANCE_SECRET
+      - BYBIT_API_KEY
+      - BYBIT_SECRET
     tty: true
     logging:
       driver: "json-file"
@@ -29,6 +31,8 @@ services:
       - PERPDEX_CONTRACT_ABI_JSON_DIRPATH=/app/hardhat/deployments/localhost/
       - BINANCE_API_KEY
       - BINANCE_SECRET
+      - BYBIT_API_KEY
+      - BYBIT_SECRET
     depends_on:
       perpdex-hardhat:
         condition: service_healthy

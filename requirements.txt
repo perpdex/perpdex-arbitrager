@@ -1,11 +1,13 @@
 # pip freeze | grep -e autopep8 -e ccxt -e flake8 -e numpy -e pytest -e python-dotenv -e pytest-cov -e PyYAML -e web3
 autopep8==1.6.0
-ccxt==1.89.96
+ccxt==1.90.86
 flake8==4.0.1
 numpy==1.23.0
+pybotters==0.13.0
 pytest==7.1.1
 pytest-asyncio==0.18.3
 pytest-cov==3.0.0
+pytest-dotenv==0.5.2
 pytest-mock==3.7.0
 python-dotenv==0.20.0
 PyYAML==6.0
