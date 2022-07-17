@@ -32,6 +32,7 @@ def test_binance_rest_ticker(symbol):
 # symbol:
 # - linear:  https://testnet.binancefuture.com/fapi/v1/exchangeInfo
 # - inverse: https://testnet.binancefuture.com/dapi/v1/exchangeInfo
+@skip_if_secret_not_set
 @pytest.mark.asyncio
 @pytest.mark.parametrize('symbol, lot_size', [('BTCUSDT', 0.001), ('BTCUSD_PERP', 1)])
 async def test_binance_ws_ticker(symbol, lot_size):
