@@ -1,5 +1,7 @@
 import os
 
+import ccxt
+
 from .arbitrager import Arbitrager, ArbitragerConfig
 from .contracts.utils import get_w3
 from .exchanges import binance, perpdex
@@ -21,14 +23,19 @@ def binance_perpdex_arbitrager() -> Arbitrager:
     _exchange_contract_filepath = os.path.join(
         os.environ['PERPDEX_CONTRACT_ABI_JSON_DIRPATH'], 'PerpdexExchange.json')
 
+    binance_symbol = 'BTCUSDT'
+    default_type = binance.ccxt_default_type(symbol=binance_symbol)
+    ccxt_binance = ccxt.binance({
+        'apiKey': os.environ['BINANCE_API_KEY'],
+        'secret': os.environ['BINANCE_SECRET'],
+        'options': {'defaultType': default_type},
+    })
+
     # position getter
 
-    _binance_position_getter = binance.BinanceLinearRestPositionGetter(
-        config=binance.BinanceLinearRestPositionGetterConfig(
-            api_key=os.environ["BINANCE_API_KEY"],
-            secret=os.environ["BINANCE_SECRET"],
-            symbol='BTC/USDT',
-        )
+    _binance_position_getter = binance.BinanceRestPositionGetter(
+        ccxt_exchange=ccxt_binance,
+        symbol=binance_symbol,
     )
 
     _perpdex_position_getter = perpdex.PerpdexPositionGetter(
@@ -41,11 +48,10 @@ def binance_perpdex_arbitrager() -> Arbitrager:
 
     # ticker
 
-    _binance_ticker = binance.BinanceLinearRestTicker(
-        config=binance.BinanceLinearRestTickerConfig(
-            symbol='BTC/USDT',
-            update_limit_sec=0.5,
-        )
+    _binance_ticker = binance.BinanceRestTicker(
+        ccxt_exchange=ccxt_binance,
+        symbol=binance_symbol,
+        update_limit_sec=0.5,
     )
 
     _perpdex_ticker = perpdex.PerpdexContractTicker(
@@ -58,13 +64,7 @@ def binance_perpdex_arbitrager() -> Arbitrager:
 
     # orderer
 
-    _binance_orderer = binance.BinanceLinearOrderer(
-        config=binance.BinanceLinearOrdererConfig(
-            api_key=os.environ['BINANCE_API_KEY'],
-            secret=os.environ['BINANCE_SECRET'],
-        )
-    )
-
+    _binance_orderer = binance.BinanceOrderer(ccxt_exchange=ccxt_binance)
     _perpdex_orderer = perpdex.PerpdexOrderer(
         w3=_w3,
         config=perpdex.PerpdexOrdererConfig(
@@ -93,8 +93,8 @@ def binance_perpdex_arbitrager() -> Arbitrager:
         position_getter=_binance_position_getter,
         taker=_binance_orderer,
         config=TakePositionChaserConfig(
-            symbol='BTC/USDT',
-        ),
+            symbol=binance_symbol,
+        )
     )
 
     perpdex_position_chaser = TakePositionChaser(

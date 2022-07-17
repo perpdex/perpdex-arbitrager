@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-import pybotters
 
 import ccxt
+import pybotters
 
 
 @dataclass
@@ -61,10 +61,6 @@ class BybitWsPositionGetter:
 
     def current_position(self) -> float or int:
         pos_dict = self._store.position.one(self._config.symbol)
-        pos_dict2 = self._store.position.both(self._config.symbol)
-        print('----------', self._config.symbol)
-        print(pos_dict)
-        print(pos_dict2)
 
         if pos_dict is None or pos_dict['side'] is None:
             pos = 0.0

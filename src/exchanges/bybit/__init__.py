@@ -1,4 +1,4 @@
-from .order import BybitOrderer, BybitOrdererConfig
+from .orderer import BybitOrderer, BybitOrdererConfig
 from .position import (BybitRestPositionGetter, BybitRestPositionGetterConfig,
                        BybitWsPositionGetter, BybitWsPositionGetterConfig)
 from .ticker import (BybitRestTicker, BybitRestTickerConfig, BybitWsTicker,
