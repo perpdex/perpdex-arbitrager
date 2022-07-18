@@ -20,16 +20,16 @@ class ExchangeClientSet:
     position_getter: IPositionGetter
     price_getter: IPriceGetter
 
-def create_binance_client_set(read_only: bool=False):
-    binance_symbol = 'BTCUSDT'
+def create_binance_client_set(one_side: bool=False):
+    binance_symbol = os.getenv('BINANCE_SYMBOL', 'BTCUSDT')
     default_type = binance.ccxt_default_type(symbol=binance_symbol)
     ccxt_binance = ccxt.binance({
-        'apiKey': None if read_only else os.environ['BINANCE_API_KEY'],
-        'secret': None if read_only else os.environ['BINANCE_SECRET'],
+        'apiKey': None if one_side else os.environ['BINANCE_API_KEY'],
+        'secret': None if one_side else os.environ['BINANCE_SECRET'],
         'options': {'defaultType': default_type},
     })
 
-    if read_only:
+    if one_side:
         position_getter = None
         position_chaser = None
     else:
@@ -50,6 +50,7 @@ def create_binance_client_set(read_only: bool=False):
         ccxt_exchange=ccxt_binance,
         symbol=binance_symbol,
         update_limit_sec=0.5,
+        use_mid_price=one_side,
     )
 
     return ExchangeClientSet(
@@ -65,8 +66,10 @@ def create_perpdex_client_set():
         web3_provider_uri=os.environ['WEB3_PROVIDER_URI'],
         user_private_key=os.environ['USER_PRIVATE_KEY'],
     )
+    market_name = os.getenv('PERPDEX_MARKET', 'USD')
+    inverse = market_name == 'USD'
     abi_json_dirpath = os.getenv('PERPDEX_CONTRACT_ABI_JSON_DIRPATH', '/app/deps/perpdex-contract/deployments/' + web3_network_name)
-    _market_contract_filepath = os.path.join(abi_json_dirpath, 'PerpdexMarketBTC.json')
+    _market_contract_filepath = os.path.join(abi_json_dirpath, 'PerpdexMarket{}.json'.format(market_name))
     _exchange_contract_filepath = os.path.join(abi_json_dirpath, 'PerpdexExchange.json')
 
     position_getter = perpdex.PerpdexPositionGetter(
@@ -82,7 +85,8 @@ def create_perpdex_client_set():
         config=perpdex.PerpdexContractTickerConfig(
             market_contract_abi_json_filepath=_market_contract_filepath,
             update_limit_sec=0.5,
-        )
+            inverse=inverse,
+        ),
     )
 
     orderer = perpdex.PerpdexOrderer(
@@ -97,7 +101,8 @@ def create_perpdex_client_set():
         position_getter=position_getter,
         taker=orderer,
         config=TakePositionChaserConfig(
-            symbol='BTC',
+            symbol=market_name,
+            inverse=inverse,
         ),
     )
 
@@ -134,5 +139,5 @@ def create_arbitrager(client_set1: ExchangeClientSet, client_set2: ExchangeClien
 def create_perpdex_binance_arbitrager():
     one_side_arb = bool(int(os.getenv('ONE_SIDE_ARB', '0')))
     perpdex_client_set = create_perpdex_client_set()
-    binance_client_set = create_binance_client_set(read_only=one_side_arb)
+    binance_client_set = create_binance_client_set(one_side=one_side_arb)
     return create_arbitrager(perpdex_client_set, binance_client_set)
