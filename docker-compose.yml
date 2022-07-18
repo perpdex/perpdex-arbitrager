@@ -21,7 +21,7 @@ services:
       driver: "json-file"
       options:
         max-size: "32m"
-  
+
   py-test:
     <<: *py
     environment:
@@ -34,9 +34,8 @@ services:
       - BYBIT_API_KEY
       - BYBIT_SECRET
     depends_on:
-      perpdex-hardhat:
-        condition: service_healthy
-    
+      - perpdex-hardhat
+
   perpdex-hardhat:
     build:
       context: ./hardhat
@@ -47,12 +46,6 @@ services:
     command: sh -c "yarn install && yarn hardhat node"
     expose:
       - 8545  # hardhat localhost default port
-    healthcheck:
-      test: curl -f http://localhost:8545 || exit 1
-      interval: 3s
-      timeout: 5s
-      retries: 15
-      start_period: 15s
 
 volumes:
   unmount_vol:

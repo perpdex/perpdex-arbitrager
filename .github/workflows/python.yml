@@ -26,18 +26,18 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: 16.x
-    
+
     - name: Build deps
       shell: bash
       working-directory: ./deps/perpdex-contract/
       run: |
         npm install
         npm run build
-    
+
     - name: Run tests
       working-directory: ./
       run: |
-        docker compose run --rm py-test python -m pytest --cov=. --cov-branch --cov-report=html
+        docker compose run --rm py-test wait-for-it.sh --timeout=30 --strict perpdex-hardhat:8545 -- python -m pytest --cov=. --cov-branch --cov-report=html
 
     - name: Archive code coverage results
       uses: actions/upload-artifact@v3
