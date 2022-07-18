@@ -1,6 +1,6 @@
 import asyncio
 from dataclasses import dataclass
-
+from typing import Optional
 
 class ITargetPosCalculator:
     def target_pos(self) -> float:
@@ -23,7 +23,7 @@ class Arbitrager:
             config: ArbitragerConfig,
             target_pos_calculator: ITargetPosCalculator,
             position_chaser1: IPositionChaser,
-            position_chaser2: IPositionChaser,
+            position_chaser2: Optional[IPositionChaser],
     ):
         self._config = config
         self._target_pos_calculator = target_pos_calculator
@@ -31,7 +31,7 @@ class Arbitrager:
         self._position_chaser2 = position_chaser2
 
         self._task: asyncio.Task = None
-    
+
     def health_check(self) -> bool:
         return not self._task.done()
 
@@ -42,9 +42,9 @@ class Arbitrager:
         while True:
             target_pos = self._target_pos_calculator.target_pos()
 
-            await asyncio.gather(
-                self._position_chaser1.execute(target_size=target_pos),
-                self._position_chaser2.execute(target_size=target_pos * -1)
-            )
+            tasks = [self._position_chaser1.execute(target_size=target_pos)]
+            if self._position_chaser2 is not None:
+                tasks.append(self._position_chaser2.execute(target_size=target_pos * -1))
+            await asyncio.gather(*tasks)
 
             await asyncio.sleep(self._config.trade_loop_sec)
