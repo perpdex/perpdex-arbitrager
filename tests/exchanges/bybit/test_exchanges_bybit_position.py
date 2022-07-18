@@ -49,7 +49,10 @@ async def test_bybit_ws_position_getter(symbol, lot_size):
             testnet=True,
         )
 
-    await store.wait()
+    try:
+        await asyncio.wait_for(store.wait(), timeout=1.0)
+    except asyncio.TimeoutError:
+        print('asyncio.wait_for(store.wait(), timeout=1.0) timeout')
 
     getter = bybit.BybitWsPositionGetter(
         store=store,
