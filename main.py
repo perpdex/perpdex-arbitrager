@@ -19,6 +19,7 @@ async def main():
 
         arb.start()
         while arb.health_check():
+            logger.debug('health check ok')
             await asyncio.sleep(30)
         logger.warning('Restarting Arb bot')
 

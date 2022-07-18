@@ -1,5 +1,6 @@
 import asyncio
 from dataclasses import dataclass
+from logging import getLogger
 from typing import Optional
 
 class ITargetPosCalculator:
@@ -29,6 +30,7 @@ class Arbitrager:
         self._target_pos_calculator = target_pos_calculator
         self._position_chaser1 = position_chaser1
         self._position_chaser2 = position_chaser2
+        self._logger = getLogger(__name__)
 
         self._task: asyncio.Task = None
 
@@ -36,11 +38,14 @@ class Arbitrager:
         return not self._task.done()
 
     def start(self):
+        self._logger.debug('start')
         self._task = asyncio.create_task(self._trade())
 
     async def _trade(self):
+        self._logger.debug('_trade')
         while True:
             target_pos = self._target_pos_calculator.target_pos()
+            self._logger.debug('arb loop target_pos {}'.format(target_pos))
 
             tasks = [self._position_chaser1.execute(target_size=target_pos)]
             if self._position_chaser2 is not None:

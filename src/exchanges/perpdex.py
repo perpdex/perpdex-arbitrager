@@ -1,4 +1,5 @@
 import json
+from logging import getLogger
 import time
 from dataclasses import dataclass
 
@@ -58,6 +59,7 @@ class PerpdexOrderer:
     def __init__(self, w3, config: PerpdexOrdererConfig):
         self._w3 = w3
         self._config = config
+        self._logger = getLogger(__name__)
 
         self._exchange_contract = _get_contract_from_abi_json(
             w3,
@@ -71,6 +73,9 @@ class PerpdexOrderer:
             self._symbol_to_market_address[symbol] = contract.address
 
     def post_market_order(self, symbol: str, side_int: int, size: float):
+        self._logger.info('post_market_order symbol {} side_int {} size {}'.format(
+            symbol, side_int, size))
+
         assert side_int != 0
 
         if symbol not in self._symbol_to_market_address:
