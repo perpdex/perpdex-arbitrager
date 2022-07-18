@@ -24,7 +24,7 @@ def market_filepath():
 
 @pytest.fixture
 def market_contract(w3, market_filepath):
-    return perpdex._get_contract_from_abi_json(w3, market_filepath)
+    return utils.get_contract_from_abi_json(w3, market_filepath)
 
 
 @pytest.fixture
@@ -35,7 +35,7 @@ def exchange_filepath():
 
 @pytest.fixture
 def exchange_contract(w3, exchange_filepath):
-    return perpdex._get_contract_from_abi_json(w3, exchange_filepath)
+    return utils.get_contract_from_abi_json(w3, exchange_filepath)
 
 
 @pytest.fixture(autouse=True, scope='function')
