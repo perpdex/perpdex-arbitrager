@@ -71,7 +71,7 @@ class PerpdexOrderer:
         if symbol not in self._symbol_to_market_address:
             raise ValueError(f"market address not initialized: {symbol=}")
 
-        # get markt address from symbol string
+        # get market address from symbol string
         market = self._symbol_to_market_address[symbol]
 
         # calculate amount with decimals from size
@@ -87,7 +87,7 @@ class PerpdexOrderer:
             deadline=MAX_UINT,
         )).transact()
         self._w3.eth.wait_for_transaction_receipt(tx_hash)
-    
+
 
 @dataclass
 class PerpdexPositionGetterConfig:
@@ -99,7 +99,7 @@ class PerpdexPositionGetter:
     def __init__(self, w3, config: PerpdexPositionGetterConfig):
         self._w3 = w3
         self._config = config
-    
+
         self._market_contract = _get_contract_from_abi_json(
             w3,
             config.market_contract_abi_json_filepath,
