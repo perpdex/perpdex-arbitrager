@@ -1,9 +1,9 @@
-from src.resolver import binance_perpdex_arbitrager
+from src.resolver import create_perpdex_binance_arbitrager
 from src.arbitrager import Arbitrager
 
 
-def test_binance_perpdex_arbitrager_smock(monkeypatch):
+def test_create_perpdex_binance_arbitrager_smock(monkeypatch):
     monkeypatch.setenv('BINANCE_API_KEY', 'dummy')
     monkeypatch.setenv('BINANCE_SECRET', 'dummy')
-    arb = binance_perpdex_arbitrager()
+    arb = create_perpdex_binance_arbitrager()
     assert type(arb) is Arbitrager

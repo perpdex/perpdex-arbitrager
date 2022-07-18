@@ -1,44 +1,75 @@
+from dataclasses import dataclass
 import os
 
 import ccxt
 
-from .arbitrager import Arbitrager, ArbitragerConfig
+from .arbitrager import Arbitrager, ArbitragerConfig, IPositionChaser
 from .contracts.utils import get_w3
 from .exchanges import binance, perpdex
-from .position_chaser import TakePositionChaser, TakePositionChaserConfig
-from .spread_calculator import TakeTakeSpreadCalculator
+from .position_chaser import (
+    TakePositionChaser, TakePositionChaserConfig,
+    IPositionGetter
+)
+from .spread_calculator import TakeTakeSpreadCalculator, IPriceGetter
 from .target_pos_calculator import (TargetPosCalculator,
                                     TargetPosCalculatorConfig)
 
+@dataclass
+class ExchangeClientSet:
+    position_chaser: IPositionChaser
+    position_getter: IPositionGetter
+    price_getter: IPriceGetter
 
-def binance_perpdex_arbitrager() -> Arbitrager:
-    _w3 = get_w3(
-        network_name=os.environ['WEB3_NETWORK_NAME'],
-        web3_provider_uri=os.environ['WEB3_PROVIDER_URI'],
-        user_private_key=os.environ['USER_PRIVATE_KEY'],
-    )
-    _market_contract_filepath = os.path.join(
-        os.environ['PERPDEX_CONTRACT_ABI_JSON_DIRPATH'], 'PerpdexMarketBTC.json')
-
-    _exchange_contract_filepath = os.path.join(
-        os.environ['PERPDEX_CONTRACT_ABI_JSON_DIRPATH'], 'PerpdexExchange.json')
-
+def create_binance_client_set(read_only: bool=False):
     binance_symbol = 'BTCUSDT'
     default_type = binance.ccxt_default_type(symbol=binance_symbol)
     ccxt_binance = ccxt.binance({
-        'apiKey': os.environ['BINANCE_API_KEY'],
-        'secret': os.environ['BINANCE_SECRET'],
+        'apiKey': None if read_only else os.environ['BINANCE_API_KEY'],
+        'secret': None if read_only else os.environ['BINANCE_SECRET'],
         'options': {'defaultType': default_type},
     })
 
-    # position getter
+    if read_only:
+        position_getter = None
+        position_chaser = None
+    else:
+        position_getter = binance.BinanceRestPositionGetter(
+            ccxt_exchange=ccxt_binance,
+            symbol=binance_symbol,
+        )
+        orderer = binance.BinanceOrderer(ccxt_exchange=ccxt_binance)
+        position_chaser = TakePositionChaser(
+            position_getter=position_getter,
+            taker=orderer,
+            config=TakePositionChaserConfig(
+                symbol=binance_symbol,
+            )
+        )
 
-    _binance_position_getter = binance.BinanceRestPositionGetter(
+    ticker = binance.BinanceRestTicker(
         ccxt_exchange=ccxt_binance,
         symbol=binance_symbol,
+        update_limit_sec=0.5,
     )
 
-    _perpdex_position_getter = perpdex.PerpdexPositionGetter(
+    return ExchangeClientSet(
+        position_chaser=position_chaser,
+        position_getter=position_getter,
+        price_getter=ticker,
+    )
+
+def create_perpdex_client_set():
+    web3_network_name = os.environ['WEB3_NETWORK_NAME']
+    _w3 = get_w3(
+        network_name=web3_network_name,
+        web3_provider_uri=os.environ['WEB3_PROVIDER_URI'],
+        user_private_key=os.environ['USER_PRIVATE_KEY'],
+    )
+    abi_json_dirpath = os.getenv('PERPDEX_CONTRACT_ABI_JSON_DIRPATH', '/app/deps/perpdex-contract/deployments/' + web3_network_name)
+    _market_contract_filepath = os.path.join(abi_json_dirpath, 'PerpdexMarketBTC.json')
+    _exchange_contract_filepath = os.path.join(abi_json_dirpath, 'PerpdexExchange.json')
+
+    position_getter = perpdex.PerpdexPositionGetter(
         w3=_w3,
         config=perpdex.PerpdexPositionGetterConfig(
             market_contract_abi_json_filepath=_market_contract_filepath,
@@ -46,15 +77,7 @@ def binance_perpdex_arbitrager() -> Arbitrager:
         )
     )
 
-    # ticker
-
-    _binance_ticker = binance.BinanceRestTicker(
-        ccxt_exchange=ccxt_binance,
-        symbol=binance_symbol,
-        update_limit_sec=0.5,
-    )
-
-    _perpdex_ticker = perpdex.PerpdexContractTicker(
+    ticker = perpdex.PerpdexContractTicker(
         w3=_w3,
         config=perpdex.PerpdexContractTickerConfig(
             market_contract_abi_json_filepath=_market_contract_filepath,
@@ -62,10 +85,7 @@ def binance_perpdex_arbitrager() -> Arbitrager:
         )
     )
 
-    # orderer
-
-    _binance_orderer = binance.BinanceOrderer(ccxt_exchange=ccxt_binance)
-    _perpdex_orderer = perpdex.PerpdexOrderer(
+    orderer = perpdex.PerpdexOrderer(
         w3=_w3,
         config=perpdex.PerpdexOrdererConfig(
             market_contract_abi_json_filepaths=[_market_contract_filepath],
@@ -73,13 +93,27 @@ def binance_perpdex_arbitrager() -> Arbitrager:
         )
     )
 
-    # 1: binance, 2: perpdex
+    position_chaser = TakePositionChaser(
+        position_getter=position_getter,
+        taker=orderer,
+        config=TakePositionChaserConfig(
+            symbol='BTC',
+        ),
+    )
+
+    return ExchangeClientSet(
+        position_chaser=position_chaser,
+        position_getter=position_getter,
+        price_getter=ticker,
+    )
+
+def create_arbitrager(client_set1: ExchangeClientSet, client_set2: ExchangeClientSet) -> Arbitrager:
     target_pos_calculator = TargetPosCalculator(
         spread_getter=TakeTakeSpreadCalculator(
-            price_getter1=_binance_ticker,
-            price_getter2=_perpdex_ticker,
+            price_getter1=client_set1.price_getter,
+            price_getter2=client_set2.price_getter,
         ),
-        position_getter=_binance_position_getter,
+        position_getter=client_set1.position_getter,
         config=TargetPosCalculatorConfig(
             open_threshold=0.0010,   # 0.10%
             close_threshold=0.0005,  # 0.05%
@@ -88,28 +122,17 @@ def binance_perpdex_arbitrager() -> Arbitrager:
         ),
     )
 
-    # 1: binance, 2: perpdex
-    binance_position_chaser = TakePositionChaser(
-        position_getter=_binance_position_getter,
-        taker=_binance_orderer,
-        config=TakePositionChaserConfig(
-            symbol=binance_symbol,
-        )
-    )
-
-    perpdex_position_chaser = TakePositionChaser(
-        position_getter=_perpdex_position_getter,
-        taker=_perpdex_orderer,
-        config=TakePositionChaserConfig(
-            symbol='BTC',
-        ),
-    )
-
     return Arbitrager(
         target_pos_calculator=target_pos_calculator,
-        position_chaser1=binance_position_chaser,
-        position_chaser2=perpdex_position_chaser,
+        position_chaser1=client_set1.position_chaser,
+        position_chaser2=client_set2.position_chaser,
         config=ArbitragerConfig(
             trade_loop_sec=1.0
         ),
     )
+
+def create_perpdex_binance_arbitrager():
+    one_side_arb = bool(int(os.getenv('ONE_SIDE_ARB', '0')))
+    perpdex_client_set = create_perpdex_client_set()
+    binance_client_set = create_binance_client_set(read_only=one_side_arb)
+    return create_arbitrager(perpdex_client_set, binance_client_set)
