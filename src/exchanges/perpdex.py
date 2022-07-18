@@ -89,7 +89,7 @@ class PerpdexOrderer:
             isExactInput=(side_int < 0),  # same as isBaseToQuote
             amount=amount,
             oppositeAmountBound=0 if (side_int < 0) else MAX_UINT,
-            deadline=MAX_UINT,
+            deadline=_get_deadline(),
         )).transact()
         self._w3.eth.wait_for_transaction_receipt(tx_hash)
 
@@ -130,3 +130,7 @@ def _get_contract_from_abi_json(w3, filepath: str):
         abi=abi['abi'],
     )
     return contract
+
+
+def _get_deadline():
+    return int(time.time()) + 2 * 60
