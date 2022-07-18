@@ -66,7 +66,7 @@ def create_perpdex_client_set():
         web3_provider_uri=os.environ['WEB3_PROVIDER_URI'],
         user_private_key=os.environ['USER_PRIVATE_KEY'],
     )
-    market_name = os.getenv('PERPDEX_MARKET', 'USD')
+    market_name = os.getenv('PERPDEX_MARKET', 'BTC')
     inverse = market_name == 'USD'
     abi_json_dirpath = os.getenv('PERPDEX_CONTRACT_ABI_JSON_DIRPATH', '/app/deps/perpdex-contract/deployments/' + web3_network_name)
     _market_contract_filepath = os.path.join(abi_json_dirpath, 'PerpdexMarket{}.json'.format(market_name))
