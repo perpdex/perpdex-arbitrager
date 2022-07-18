@@ -9,12 +9,17 @@ import pybotters
 class _BinanceRestTickerConfig:
     symbol: str
     update_limit_sec: float = 0.5
+    use_mid_price: bool = False
 
 
 class BinanceRestTicker:
-    def __init__(self, ccxt_exchange: ccxt.binance, symbol: str, update_limit_sec: float = 0.5):
+    def __init__(self, ccxt_exchange: ccxt.binance, symbol: str, update_limit_sec: float = 0.5, use_mid_price: bool=False):
         self._ccxt_exchange = ccxt_exchange
-        self._config = _BinanceRestTickerConfig(symbol=symbol, update_limit_sec=update_limit_sec)
+        self._config = _BinanceRestTickerConfig(
+            symbol=symbol,
+            update_limit_sec=update_limit_sec,
+            use_mid_price=use_mid_price
+        )
 
         self._last_ts1 = 0.0
         self._last_ts2 = 0.0
@@ -24,11 +29,17 @@ class BinanceRestTicker:
 
     def bid_price(self) -> float:
         ba = self._get_bid_ask()
-        return ba['bid']
+        if self._config.use_mid_price:
+            return (ba['ask'] + ba['bid']) / 2
+        else:
+            return ba['bid']
 
     def ask_price(self) -> float:
         ba = self._get_bid_ask()
-        return ba['ask']
+        if self._config.use_mid_price:
+            return (ba['ask'] + ba['bid']) / 2
+        else:
+            return ba['ask']
 
     def last_price(self) -> float:
         """
@@ -68,7 +79,7 @@ class BinanceWsTicker:
             self,
             store: pybotters.BinanceDataStore,
             symbol: str):
-        
+
         self._store = store
         self._config = _BinanceWsTickerConfig(symbol=symbol)
 
@@ -80,11 +91,11 @@ class BinanceWsTicker:
         """
         books = self._store.orderbook.sorted()
         return float(books['b'][0][0])
-    
+
     def ask_price(self) -> float:
         books = self._store.orderbook.sorted()
         return float(books['a'][0][0])
-    
+
     def last_price(self) -> float:
         trades = self._store.trade.find()
         return float(trades[0]['p'])

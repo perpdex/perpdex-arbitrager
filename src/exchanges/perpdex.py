@@ -1,4 +1,5 @@
 import json
+from logging import getLogger
 import time
 from dataclasses import dataclass
 
@@ -13,6 +14,7 @@ DECIMALS: int = 18
 class PerpdexContractTickerConfig:
     market_contract_abi_json_filepath: str
     update_limit_sec: float = 0.5
+    inverse: bool = False
 
 
 class PerpdexContractTicker:
@@ -39,7 +41,11 @@ class PerpdexContractTicker:
 
     def _get_mark_price(self) -> float:
         if time.time() - self._last_ts >= self._config.update_limit_sec:
-            self._mark_price = self._market_contract.functions.getMarkPriceX96().call() / Q96
+            price_x96 = self._market_contract.functions.getMarkPriceX96().call()
+            if self._config.inverse:
+                self._mark_price = Q96 / price_x96
+            else:
+                self._mark_price = price_x96 / Q96
         return self._mark_price
 
 
@@ -53,6 +59,7 @@ class PerpdexOrderer:
     def __init__(self, w3, config: PerpdexOrdererConfig):
         self._w3 = w3
         self._config = config
+        self._logger = getLogger(__name__)
 
         self._exchange_contract = _get_contract_from_abi_json(
             w3,
@@ -66,6 +73,9 @@ class PerpdexOrderer:
             self._symbol_to_market_address[symbol] = contract.address
 
     def post_market_order(self, symbol: str, side_int: int, size: float):
+        self._logger.info('post_market_order symbol {} side_int {} size {}'.format(
+            symbol, side_int, size))
+
         assert side_int != 0
 
         if symbol not in self._symbol_to_market_address:
@@ -84,7 +94,7 @@ class PerpdexOrderer:
             isExactInput=(side_int < 0),  # same as isBaseToQuote
             amount=amount,
             oppositeAmountBound=0 if (side_int < 0) else MAX_UINT,
-            deadline=MAX_UINT,
+            deadline=_get_deadline(),
         )).transact()
         self._w3.eth.wait_for_transaction_receipt(tx_hash)
 
@@ -125,3 +135,7 @@ def _get_contract_from_abi_json(w3, filepath: str):
         abi=abi['abi'],
     )
     return contract
+
+
+def _get_deadline():
+    return int(time.time()) + 2 * 60

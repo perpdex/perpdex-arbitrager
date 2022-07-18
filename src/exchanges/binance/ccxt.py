@@ -1,6 +1,8 @@
 
 
 def ccxt_default_type(symbol: str):
+    if symbol in ['ASTRUSDT']:
+        return 'spot'
     if 'USDT' in symbol:
         return 'future'  # linear, USD-M
     elif 'USD_PERP' in symbol or '/USD' in symbol:
