@@ -95,6 +95,7 @@ def create_perpdex_client_set():
         config=perpdex.PerpdexOrdererConfig(
             market_contract_abi_json_filepaths=[_market_contract_filepath],
             exchange_contract_abi_json_filepath=_exchange_contract_filepath,
+            max_slippage=float(os.getenv('PERPDEX_MAX_SLIPPAGE', '0.01')),
         )
     )
 

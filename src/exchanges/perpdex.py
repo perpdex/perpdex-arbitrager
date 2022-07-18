@@ -1,7 +1,7 @@
-import json
 from logging import getLogger
 import time
 from dataclasses import dataclass
+from typing import Optional
 from ..contracts.utils import get_contract_from_abi_json
 
 import web3
@@ -50,6 +50,7 @@ class PerpdexContractTicker:
 class PerpdexOrdererConfig:
     market_contract_abi_json_filepaths: list
     exchange_contract_abi_json_filepath: str
+    max_slippage: Optional[float] = None
 
 
 class PerpdexOrderer:
@@ -63,11 +64,11 @@ class PerpdexOrderer:
             config.exchange_contract_abi_json_filepath,
         )
 
-        self._symbol_to_market_address: dict = {}
+        self._symbol_to_market_contract: dict = {}
         for filepath in config.market_contract_abi_json_filepaths:
             contract = get_contract_from_abi_json(w3, filepath)
             symbol = contract.functions.symbol().call()
-            self._symbol_to_market_address[symbol] = contract.address
+            self._symbol_to_market_contract[symbol] = contract
 
     def post_market_order(self, symbol: str, side_int: int, size: float):
         self._logger.info('post_market_order symbol {} side_int {} size {}'.format(
@@ -75,25 +76,47 @@ class PerpdexOrderer:
 
         assert side_int != 0
 
-        if symbol not in self._symbol_to_market_address:
+        if symbol not in self._symbol_to_market_contract:
             raise ValueError(f"market address not initialized: {symbol=}")
 
         # get market address from symbol string
-        market = self._symbol_to_market_address[symbol]
+        market_contract = self._symbol_to_market_contract[symbol]
+        share_price = market_contract.functions.getMarkPriceX96().call() / Q96
 
         # calculate amount with decimals from size
         amount = int(size * (10 ** DECIMALS))
 
-        tx_hash = self._exchange_contract.functions.trade(dict(
-            trader=self._w3.eth.default_account,
-            market=market,
-            isBaseToQuote=(side_int < 0),
-            isExactInput=(side_int < 0),  # same as isBaseToQuote
-            amount=amount,
-            oppositeAmountBound=0 if (side_int < 0) else MAX_UINT,
-            deadline=_get_deadline(),
-        )).transact()
-        self._w3.eth.wait_for_transaction_receipt(tx_hash)
+        retry_count = 32
+        for i in range(retry_count):
+            if self._config.max_slippage is None:
+                opposite_amount_bound = 0 if (side_int < 0) else MAX_UINT
+            else:
+                opposite_amount_bound = int(_calc_opposite_amount_bound(
+                    side_int > 0, amount, share_price, self._config.max_slippage
+                ))
+
+            method_call = self._exchange_contract.functions.trade(dict(
+                trader=self._w3.eth.default_account,
+                market=market_contract.address,
+                isBaseToQuote=(side_int < 0),
+                isExactInput=(side_int < 0),  # same as isBaseToQuote
+                amount=amount,
+                oppositeAmountBound=opposite_amount_bound,
+                deadline=_get_deadline(),
+            ))
+
+            try:
+                method_call.estimateGas()
+            except Exception as e:
+                if i == retry_count - 1:
+                    raise
+                amount /= 2
+                self._logger.debug(f'estimateGas raises {e=} retrying with amount {amount=}')
+                continue
+
+            tx_hash = method_call.transact()
+            self._w3.eth.wait_for_transaction_receipt(tx_hash)
+            break
 
 
 @dataclass
@@ -132,3 +155,11 @@ class PerpdexPositionGetter:
 
 def _get_deadline():
     return int(time.time()) + 2 * 60
+
+
+def _calc_opposite_amount_bound(is_long, share, share_price, slippage):
+    opposite_amount_center = share * share_price
+    if is_long:
+        return opposite_amount_center * (1 + slippage)
+    else:
+        return opposite_amount_center * (1 - slippage)
