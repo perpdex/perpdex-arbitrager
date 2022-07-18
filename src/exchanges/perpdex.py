@@ -13,6 +13,7 @@ DECIMALS: int = 18
 class PerpdexContractTickerConfig:
     market_contract_abi_json_filepath: str
     update_limit_sec: float = 0.5
+    inverse: bool = False
 
 
 class PerpdexContractTicker:
@@ -39,7 +40,11 @@ class PerpdexContractTicker:
 
     def _get_mark_price(self) -> float:
         if time.time() - self._last_ts >= self._config.update_limit_sec:
-            self._mark_price = self._market_contract.functions.getMarkPriceX96().call() / Q96
+            price_x96 = self._market_contract.functions.getMarkPriceX96().call()
+            if self._config.inverse:
+                self._mark_price = Q96 / price_x96
+            else:
+                self._mark_price = price_x96 / Q96
         return self._mark_price
 
 
