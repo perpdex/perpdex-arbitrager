@@ -2,6 +2,7 @@ import json
 from logging import getLogger
 import time
 from dataclasses import dataclass
+from ..contracts.utils import get_contract_from_abi_json
 
 import web3
 
@@ -22,7 +23,7 @@ class PerpdexContractTicker:
         self._w3 = w3
         self._config = config
 
-        self._market_contract = _get_contract_from_abi_json(
+        self._market_contract = get_contract_from_abi_json(
             w3,
             config.market_contract_abi_json_filepath,
         )
@@ -61,14 +62,14 @@ class PerpdexOrderer:
         self._config = config
         self._logger = getLogger(__name__)
 
-        self._exchange_contract = _get_contract_from_abi_json(
+        self._exchange_contract = get_contract_from_abi_json(
             w3,
             config.exchange_contract_abi_json_filepath,
         )
 
         self._symbol_to_market_address: dict = {}
         for filepath in config.market_contract_abi_json_filepaths:
-            contract = _get_contract_from_abi_json(w3, filepath)
+            contract = get_contract_from_abi_json(w3, filepath)
             symbol = contract.functions.symbol().call()
             self._symbol_to_market_address[symbol] = contract.address
 
@@ -110,11 +111,11 @@ class PerpdexPositionGetter:
         self._w3 = w3
         self._config = config
 
-        self._market_contract = _get_contract_from_abi_json(
+        self._market_contract = get_contract_from_abi_json(
             w3,
             config.market_contract_abi_json_filepath,
         )
-        self._exchange_contract = _get_contract_from_abi_json(
+        self._exchange_contract = get_contract_from_abi_json(
             w3,
             config.exchange_contract_abi_json_filepath,
         )
@@ -125,16 +126,6 @@ class PerpdexPositionGetter:
             self._market_contract.address,
         ).call()
         return base_share / (10 ** DECIMALS)
-
-
-def _get_contract_from_abi_json(w3, filepath: str):
-    with open(filepath) as f:
-        abi = json.load(f)
-    contract = w3.eth.contract(
-        address=abi['address'],
-        abi=abi['abi'],
-    )
-    return contract
 
 
 def _get_deadline():

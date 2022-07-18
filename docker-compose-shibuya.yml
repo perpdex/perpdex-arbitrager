@@ -15,7 +15,7 @@ services:
       - PERPDEX_MARKET=USD
       - BINANCE_SYMBOL=ASTRUSDT
       - ONE_SIDE_ARB=1
-    command: python main.py
+    command: python main.py run
     logging:
       driver: "json-file"
       options:
