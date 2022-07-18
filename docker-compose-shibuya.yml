@@ -1,0 +1,22 @@
+version: "3.8"
+services:
+  py-shibuya:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      - USER_PRIVATE_KEY
+      - WEB3_PROVIDER_URI=wss://rpc.shibuya.astar.network
+      - WEB3_NETWORK_NAME=shibuya
+      - PERPDEX_CONTRACT_ABI_JSON_DIRPATH=/app/deps/perpdex-contract/deployments/shibuya/
+      - PERPDEX_MARKET=USD
+      - BINANCE_SYMBOL=ASTRUSDT
+      - ONE_SIDE_ARB=1
+    command: python main.py
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "32m"
