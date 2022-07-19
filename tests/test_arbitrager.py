@@ -8,8 +8,11 @@ from src.arbitrager import Arbitrager, ArbitragerConfig
 async def test_arbitrager(mocker):
     target_pos = 10
 
-    mocked_target_pos_calculator = mocker.MagicMock()
-    mocked_target_pos_calculator.target_pos.return_value = target_pos
+    mocked_pos_calculator1 = mocker.MagicMock()
+    mocked_pos_calculator1.target_pos.return_value = target_pos
+
+    mocked_pos_calculator2 = mocker.MagicMock()
+    mocked_pos_calculator2.target_pos2.return_value = target_pos * -1
 
     mocked_chaser1 = mocker.MagicMock()
     future1 = asyncio.Future()
@@ -22,7 +25,8 @@ async def test_arbitrager(mocker):
     mocked_chaser2.execute.return_value = future2
 
     arb = Arbitrager(
-        target_pos_calculator=mocked_target_pos_calculator,
+        pos_calculator1=mocked_pos_calculator1,
+        pos_calculator2=mocked_pos_calculator2,
         position_chaser1=mocked_chaser1,
         position_chaser2=mocked_chaser2,
         config=ArbitragerConfig(trade_loop_sec=1),
