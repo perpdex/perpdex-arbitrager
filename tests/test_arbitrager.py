@@ -25,7 +25,7 @@ async def test_arbitrager(mocker):
         target_pos_calculator=mocked_target_pos_calculator,
         position_chaser1=mocked_chaser1,
         position_chaser2=mocked_chaser2,
-        config=ArbitragerConfig(trade_loop_sec=1),
+        config=ArbitragerConfig(trade_loop_sec=1, inverse=False),
     )
 
     # assert health check ok
