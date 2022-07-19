@@ -24,9 +24,14 @@ shibuya faucet: https://docs.astar.network/integration/testnet-faucet
 
 ```bash
 git submodule update --init --recursive
+
+# set collateral balance 1 billion SBY (testnet only)
+docker-compose -f docker-compose-shibuya.yml run py-shibuya python main.py setCollateralBalance 1000000000
+
+# run arbitrager
 docker-compose -f docker-compose-shibuya.yml up
 
-# or run background as daemon
+# or run in the background as daemon
 docker-compose -f docker-compose-shibuya.yml up -d
 ```
 
