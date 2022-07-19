@@ -19,6 +19,7 @@ class ExchangeClientSet:
     position_chaser: IPositionChaser
     position_getter: IPositionGetter
     price_getter: IPriceGetter
+    inverse: bool
 
 def create_binance_client_set(one_side: bool=False):
     binance_symbol = os.getenv('BINANCE_SYMBOL', 'BTCUSDT')
@@ -57,6 +58,7 @@ def create_binance_client_set(one_side: bool=False):
         position_chaser=position_chaser,
         position_getter=position_getter,
         price_getter=ticker,
+        inverse=False,
     )
 
 def create_perpdex_client_set():
@@ -85,7 +87,6 @@ def create_perpdex_client_set():
         config=perpdex.PerpdexContractTickerConfig(
             market_contract_abi_json_filepath=_market_contract_filepath,
             update_limit_sec=0.5,
-            inverse=inverse,
         ),
     )
 
@@ -102,7 +103,6 @@ def create_perpdex_client_set():
         taker=orderer,
         config=TakePositionChaserConfig(
             symbol=market_name,
-            inverse=inverse,
         ),
     )
 
@@ -110,13 +110,15 @@ def create_perpdex_client_set():
         position_chaser=position_chaser,
         position_getter=position_getter,
         price_getter=ticker,
+        inverse=inverse,
     )
 
-def create_arbitrager(client_set1: ExchangeClientSet, client_set2: ExchangeClientSet) -> Arbitrager:
+def create_arbitrager(client_set1: ExchangeClientSet, client_set2: ExchangeClientSet, inverse: bool) -> Arbitrager:
     target_pos_calculator = TargetPosCalculator(
         spread_getter=TakeTakeSpreadCalculator(
             price_getter1=client_set1.price_getter,
             price_getter2=client_set2.price_getter,
+            inverse=inverse,
         ),
         position_getter=client_set1.position_getter,
         config=TargetPosCalculatorConfig(
@@ -132,7 +134,8 @@ def create_arbitrager(client_set1: ExchangeClientSet, client_set2: ExchangeClien
         position_chaser1=client_set1.position_chaser,
         position_chaser2=client_set2.position_chaser,
         config=ArbitragerConfig(
-            trade_loop_sec=1.0
+            trade_loop_sec=1.0,
+            inverse=inverse,
         ),
     )
 
@@ -140,4 +143,8 @@ def create_perpdex_binance_arbitrager():
     one_side_arb = bool(int(os.getenv('ONE_SIDE_ARB', '0')))
     perpdex_client_set = create_perpdex_client_set()
     binance_client_set = create_binance_client_set(one_side=one_side_arb)
-    return create_arbitrager(perpdex_client_set, binance_client_set)
+    return create_arbitrager(
+        perpdex_client_set,
+        binance_client_set,
+        perpdex_client_set.inverse != binance_client_set.inverse
+    )
