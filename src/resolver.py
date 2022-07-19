@@ -122,10 +122,9 @@ def create_arbitrager(client_set1: ExchangeClientSet, client_set2: ExchangeClien
         ),
         position_getter=client_set1.position_getter,
         config=TargetPosCalculatorConfig(
-            open_threshold=0.0010,   # 0.10%
-            close_threshold=0.0005,  # 0.05%
-            threshold_step=0.0001,   # 0.01%
-            lot_size=0.001,          # 0.001 [base]
+            max_spread=float(os.getenv('MAX_SPREAD', 0.1)),
+            min_rebalance_spread_diff=float(os.getenv('MIN_REBALANCE_SPREAD_DIFF', 0.01)),
+            max_leverage=float(os.getenv('MAX_LEVERAGE', 1)),
         ),
     )
 
