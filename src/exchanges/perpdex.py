@@ -81,7 +81,8 @@ class PerpdexOrderer:
 
         # get market address from symbol string
         market_contract = self._symbol_to_market_contract[symbol]
-        share_price = market_contract.functions.getMarkPriceX96().call() / Q96
+        share_price = market_contract.functions.getShareMarkPriceX96().call() / Q96
+        self._logger.debug('share_price {}'.format(share_price))
 
         # calculate amount with decimals from size
         amount = int(size * (10 ** DECIMALS))
@@ -94,6 +95,8 @@ class PerpdexOrderer:
                 opposite_amount_bound = int(_calc_opposite_amount_bound(
                     side_int > 0, amount, share_price, self._config.max_slippage
                 ))
+
+            self._logger.debug('amount {} opposite_amount_bound {}'.format(amount, opposite_amount_bound))
 
             method_call = self._exchange_contract.functions.trade(dict(
                 trader=self._w3.eth.default_account,
@@ -110,8 +113,8 @@ class PerpdexOrderer:
             except Exception as e:
                 if i == retry_count - 1:
                     raise
-                amount /= 2
-                self._logger.debug(f'estimateGas raises {e=} retrying with amount {amount=}')
+                amount = int(amount / 2)
+                self._logger.debug(f'estimateGas raises {e=} retrying')
                 continue
 
             tx_hash = method_call.transact()
@@ -150,7 +153,7 @@ class PerpdexPositionGetter:
         account_value = self._exchange_contract.functions.getTotalAccountValue(
             self._w3.eth.default_account,
         ).call() / (10 ** DECIMALS)
-        share_price = self._market_contract.functions.getMarkPriceX96().call() / Q96
+        share_price = self._market_contract.functions.getShareMarkPriceX96().call() / Q96
         return account_value / share_price
 
 def _get_deadline():

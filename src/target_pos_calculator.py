@@ -37,10 +37,13 @@ class TargetPosCalculator:
     def target_pos(self) -> float:
         spread = self._spread_getter.spread()
         current_pos = self._position_getter.current_position()
-        max_lot_size = self._config.max_leverage * self._position_getter.unit_leverage_lot()
+
+        unit_lot = self._position_getter.unit_leverage_lot()
+        max_lot_size = self._config.max_leverage * unit_lot
+        min_rebalance_pos_diff = unit_lot * self._config.min_rebalance_spread_diff / self._config.max_spread
 
         target_pos = max_lot_size * min(1, spread / self._config.max_spread)
-        if abs(target_pos - current_pos) < self._config.min_rebalance_spread_diff:
+        if abs(target_pos - current_pos) < min_rebalance_pos_diff:
             target_pos = current_pos
 
         return target_pos
