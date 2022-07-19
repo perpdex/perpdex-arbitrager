@@ -47,6 +47,28 @@ class PerpdexContractTicker:
 
 
 @dataclass
+class PerpdexContractInverseTickerConfig(PerpdexContractTickerConfig):
+    ...
+
+
+class PerpdexContractInverseTicker:
+    def __init__(self, w3, config: PerpdexContractInverseTickerConfig):
+        self._ticker = PerpdexContractTicker(w3, config)
+
+    def bid_price(self):
+        p = self._ticker.bid_price()
+        return 1 / p if p > 0 else 0.0
+
+    def ask_price(self):
+        p = self._ticker.ask_price()
+        return 1 / p if p > 0 else 0.0
+
+    def last_price(self):
+        p = self._ticker.last_price()
+        return 1 / p if p > 0 else 0.0
+
+
+@dataclass
 class PerpdexOrdererConfig:
     market_contract_abi_json_filepaths: list
     exchange_contract_abi_json_filepath: str
