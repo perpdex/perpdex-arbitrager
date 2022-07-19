@@ -38,15 +38,14 @@ class TargetPosCalculator:
         spread = self._spread_getter.spread()
         current_pos = self._position_getter.current_position()
 
+        target_pos = current_pos
+
         # close all pos when close threshold satisfied
-        target_pos = 0.0
         if current_pos < 0 and spread > -self._config.close_threshold:
             target_pos = 0.0
         elif current_pos > 0 and spread < self._config.close_threshold:
             target_pos = 0.0
-        else:
-            target_pos = current_pos
-        
+
         # open when abs(spread) > op_thresh
         if abs(spread) > self._config.open_threshold:
             n_lot = np.ceil(
@@ -56,6 +55,7 @@ class TargetPosCalculator:
             )
             pos = n_lot * self._config.lot_size * np.sign(spread)
 
+            # stay current_pos if already opened more than pos
             if spread >= 0:
                 target_pos = max(pos, target_pos)
             else:
