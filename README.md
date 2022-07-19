@@ -23,6 +23,7 @@ shibuya faucet: https://docs.astar.network/integration/testnet-faucet
 ## How to run arbitrager
 
 ```bash
+git submodule update --init --recursive
 docker-compose -f docker-compose-shibuya.yml up
 
 # or run background as daemon
