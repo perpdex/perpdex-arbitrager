@@ -18,7 +18,6 @@ class ITaker:
 @dataclass
 class TakePositionChaserConfig:
     symbol: str
-    inverse: bool = False
 
 
 class TakePositionChaser:
@@ -32,8 +31,6 @@ class TakePositionChaser:
         self._taker = taker
 
     async def execute(self, target_size: float):
-        if self._config.inverse:
-            target_size = -target_size
         current_pos = self._position_getter.current_position()
 
         diff = target_size - current_pos

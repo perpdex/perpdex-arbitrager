@@ -17,6 +17,7 @@ class IPositionChaser:
 @dataclass
 class ArbitragerConfig:
     trade_loop_sec: int
+    inverse: bool
 
 
 class Arbitrager:
@@ -51,9 +52,18 @@ class Arbitrager:
 
                 tasks = [self._position_chaser1.execute(target_size=target_pos)]
                 if self._position_chaser2 is not None:
-                    tasks.append(self._position_chaser2.execute(target_size=target_pos * -1))
+                    target_pos2 = self._calc_target_pos2(target_pos)
+                    self._logger.debug('target_pos2 {}'.format(target_pos2))
+                    tasks.append(self._position_chaser2.execute(target_size=target_pos2))
                 await asyncio.gather(*tasks)
 
                 await asyncio.sleep(self._config.trade_loop_sec)
         except:
             self._logger.error(sys.exc_info())
+
+    def _calc_target_pos2(self, target_pos):
+        # TODO: convert share to amount
+        if self._config.inverse:
+            raise Exception('not implemented')
+        else:
+            return -target_pos
