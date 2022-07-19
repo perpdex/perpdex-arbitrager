@@ -12,7 +12,10 @@ from .position_chaser import (
 )
 from .spread_calculator import TakeTakeSpreadCalculator, IPriceGetter
 from .target_pos_calculator import (TargetPosCalculator,
-                                    TargetPosCalculatorConfig)
+                                    TargetPosCalculatorConfig,
+                                    IdentitySecondaryPosCalculator,
+                                    QuoteToBaseSecondaryPosCalculator,
+                                    )
 
 @dataclass
 class ExchangeClientSet:
@@ -82,13 +85,22 @@ def create_perpdex_client_set():
         )
     )
 
-    ticker = perpdex.PerpdexContractTicker(
-        w3=_w3,
-        config=perpdex.PerpdexContractTickerConfig(
-            market_contract_abi_json_filepath=_market_contract_filepath,
-            update_limit_sec=0.5,
-        ),
-    )
+    if inverse:
+        ticker = perpdex.PerpdexContractInverseTicker(
+            w3=_w3,
+            config=perpdex.PerpdexContractInverseTickerConfig(
+                market_contract_abi_json_filepath=_market_contract_filepath,
+                update_limit_sec=0.5,
+            ),
+        )
+    else:
+        ticker = perpdex.PerpdexContractTicker(
+            w3=_w3,
+            config=perpdex.PerpdexContractTickerConfig(
+                market_contract_abi_json_filepath=_market_contract_filepath,
+                update_limit_sec=0.5,
+            ),
+        )
 
     orderer = perpdex.PerpdexOrderer(
         w3=_w3,
@@ -114,11 +126,10 @@ def create_perpdex_client_set():
     )
 
 def create_arbitrager(client_set1: ExchangeClientSet, client_set2: ExchangeClientSet, inverse: bool) -> Arbitrager:
-    target_pos_calculator = TargetPosCalculator(
+    pos_calculator1 = TargetPosCalculator(
         spread_getter=TakeTakeSpreadCalculator(
             price_getter1=client_set1.price_getter,
             price_getter2=client_set2.price_getter,
-            inverse=inverse,
         ),
         position_getter=client_set1.position_getter,
         config=TargetPosCalculatorConfig(
@@ -129,13 +140,20 @@ def create_arbitrager(client_set1: ExchangeClientSet, client_set2: ExchangeClien
         ),
     )
 
+    if inverse:
+        pos_calculator2 = QuoteToBaseSecondaryPosCalculator(
+            price_getter=client_set2.price_getter,
+        )
+    else:
+        pos_calculator2 = IdentitySecondaryPosCalculator()
+
     return Arbitrager(
-        target_pos_calculator=target_pos_calculator,
+        pos_calculator1=pos_calculator1,
+        pos_calculator2=pos_calculator2,
         position_chaser1=client_set1.position_chaser,
         position_chaser2=client_set2.position_chaser,
         config=ArbitragerConfig(
             trade_loop_sec=1.0,
-            inverse=inverse,
         ),
     )
 
