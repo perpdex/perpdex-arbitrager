@@ -123,6 +123,12 @@ class PerpdexPositionGetter:
         ).call()
         return base_share / (10 ** DECIMALS)
 
+    def unit_leverage_lot(self) -> float:
+        account_value = self._exchange_contract.functions.getTotalAccountValue(
+            self._w3.eth.default_account,
+        ).call() / (10 ** DECIMALS)
+        share_price = self._market_contract.functions.getMarkPriceX96().call() / Q96
+        return account_value / share_price
 
 def _get_deadline():
     return int(time.time()) + 2 * 60
