@@ -20,3 +20,4 @@ services:
       driver: "json-file"
       options:
         max-size: "32m"
+    restart: always

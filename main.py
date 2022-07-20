@@ -6,7 +6,7 @@ from logging import getLogger, config
 from src import resolver
 from src.debug import setCollateralBalance, printAccountInfo
 
-async def main():
+async def main(restart):
     with open("main_logger_config.yml", encoding='UTF-8') as f:
         y = yaml.safe_load(f.read())
         config.dictConfig(y)
@@ -21,15 +21,19 @@ async def main():
         while arb.health_check():
             logger.debug('health check ok')
             await asyncio.sleep(30)
+
+        if not restart:
+            break
         logger.warning('Restarting Arb bot')
 
+    logger.warning('exit')
 
 class Cli:
     """arbitrage bot for perpdex"""
 
-    def run(self):
+    def run(self, restart: bool=False):
         """run arbitrage bot"""
-        asyncio.run(main())
+        asyncio.run(main(restart))
 
     def setCollateralBalance(self, balance, account=None):
         """call setCollateralBalance (for testnet)"""
