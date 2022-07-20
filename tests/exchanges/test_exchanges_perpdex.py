@@ -134,6 +134,48 @@ def test_perpdex_contract_ticker(w3):
     assert ticker.last_price() == 200.0
 
 
+def test_perpdex_contract_inverse_ticker(w3):
+    contfact_filepath = os.path.join(
+        os.environ['PERPDEX_CONTRACT_ABI_JSON_DIRPATH'], 'PerpdexMarketBTC.json')
+    ticker = perpdex.PerpdexContractInverseTicker(
+        w3=w3,
+        config=perpdex.PerpdexContractInverseTickerConfig(
+            market_contract_abi_json_filepath=contfact_filepath,
+            update_limit_sec=0.00001,
+        )
+    )
+
+    # change mark price to 100.0 (quote/base*baseBalancePerShare)
+    tx_hash = ticker._ticker._market_contract.functions.setPoolInfo(dict(
+        base=10,
+        quote=1000,
+        totalLiquidity=1000,
+        cumBasePerLiquidityX96=0,
+        cumQuotePerLiquidityX96=0,
+        baseBalancePerShareX96=1 * perpdex.Q96,
+    )).transact()
+    w3.eth.wait_for_transaction_receipt(tx_hash)
+
+    assert ticker.bid_price() == 1 / 100.0
+    assert ticker.ask_price() == 1 / 100.0
+    assert ticker.last_price() == 1 / 100.0
+
+    # change mark price to 200.0 (quote/base*baseBalancePerShare)
+    tx_hash = ticker._ticker._market_contract.functions.setPoolInfo(dict(
+        base=10,
+        quote=2000,
+        totalLiquidity=1000,
+        cumBasePerLiquidityX96=0,
+        cumQuotePerLiquidityX96=0,
+        baseBalancePerShareX96=1 * perpdex.Q96,
+    )).transact()
+    w3.eth.wait_for_transaction_receipt(tx_hash)
+
+    assert ticker.bid_price() == 1 / 200.0
+    assert ticker.ask_price() == 1 / 200.0
+    assert ticker.last_price() == 1 / 200.0
+
+
 def test_perpdex_position_getter(w3, market_filepath, exchange_filepath):
     getter = perpdex.PerpdexPositionGetter(
         w3=w3,

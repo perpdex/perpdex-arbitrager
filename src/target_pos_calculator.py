@@ -47,3 +47,33 @@ class TargetPosCalculator:
             target_pos = current_pos
 
         return target_pos
+
+
+class IPriceGetter:
+    def last_price(self) -> float:
+        ...
+
+
+class IdentitySecondaryPosCalculator:
+    def target_pos2(self, target_pos1: float or int) -> float or int:
+        return target_pos1 * -1
+
+
+class QuoteToBaseSecondaryPosCalculator:
+    def __init__(self, price_getter: IPriceGetter, position_type: callable = float):
+        self._price_getter = price_getter
+        self._position_type = position_type
+
+    def target_pos2(self, target_pos1_quote: float) -> float or int:
+        pos = target_pos1_quote / self._price_getter.last_price()
+        return self._position_type(pos) * -1
+
+
+class BaseToQuoteSecondaryPosCalculator:
+    def __init__(self, price_getter: IPriceGetter, position_type: callable = int):
+        self._price_getter = price_getter
+        self._position_type = position_type
+
+    def target_pos2(self, target_pos1_base: float) -> float or int:
+        pos = self._price_getter.last_price() * target_pos1_base
+        return self._position_type(pos) * -1
