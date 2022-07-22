@@ -156,6 +156,103 @@ class PerpdexPositionGetter:
         share_price = self._market_contract.functions.getShareMarkPriceX96().call() / Q96
         return account_value / share_price
 
+
+@dataclass
+class PerpdexLiquidityRebalancerConfig:
+    market_contract_abi_json_filepath: str
+    exchange_contract_abi_json_filepath: str
+    target_leverage: float
+    rebalance_ratio: float
+
+
+class PerpdexLiquidityRebalancer:
+    def __init__(self, w3, config: PerpdexLiquidityRebalancerConfig):
+        self._w3 = w3
+        self._config = config
+
+        assert 0 < config.rebalance_ratio <= 1
+        assert 0 < config.target_leverage
+
+        self._market_contract = get_contract_from_abi_json(
+            w3,
+            config.market_contract_abi_json_filepath,
+        )
+        self._exchange_contract = get_contract_from_abi_json(
+            w3,
+            config.exchange_contract_abi_json_filepath,
+        )
+
+        self._logger = getLogger(__class__.__name__)
+
+    def rebalance(self):
+        self._remove_liquidity()
+        self._add_liquidity()
+
+    def _remove_liquidity(self):
+        liquidity = self._get_liquidity()
+        liquidity_to_remove = int(liquidity * self._config.rebalance_ratio)
+        if liquidity_to_remove == 0:
+            self._logger.info("skip rebalancer removeLiquidity because liquidity to remove is zero")
+            return
+
+        self._logger.debug("rebalancer removeLiquidity liquidity = {})".format(liquidity_to_remove))
+        method_call = self._exchange_contract.functions.removeLiquidity(dict(
+            trader=self._w3.eth.default_account,
+            market=self._market_contract.address,
+            liquidity=liquidity_to_remove,
+            minBase=0,
+            minQuote=0,
+            deadline=_get_deadline(),
+        ))
+
+        try:
+            method_call.estimateGas()
+        except Exception as e:
+            self._logger.info("rebalancer removeLiquidity estimateGas failed: {}".format(e))
+            return
+
+        tx_hash = method_call.transact()
+        self._w3.eth.wait_for_transaction_receipt(tx_hash)
+
+    def _add_liquidity(self):
+        account_value = self._exchange_contract.functions.getTotalAccountValue(
+            self._w3.eth.default_account,
+        ).call()
+ 
+        share_price = self._market_contract.functions.getShareMarkPriceX96().call() / Q96
+
+        target_quote = int(account_value * (self._config.target_leverage / 2))
+        target_base = int(target_quote / share_price)
+
+        liquidity = self._get_liquidity()
+        liq_base, liq_quote = self._market_contract.functions.getLiquidityValue(liquidity).call()
+
+        base = target_base - liq_base
+        quote = target_quote - liq_quote
+
+        if base < 0 or quote < 0:
+            self._logger.info("Skip rebalancer addLiquidity (base, quote) = ({}, {})".format(base, quote))
+            return
+
+        self._logger.debug("rebalancer addLiquidity (base, quote) = ({}, {})".format(base, quote))
+        tx_hash = self._exchange_contract.functions.addLiquidity(dict(
+            market=self._market_contract.address,
+            base=base,
+            quote=quote,
+            minBase=0,
+            minQuote=0,
+            deadline=_get_deadline(),
+        )).transact()
+        self._w3.eth.wait_for_transaction_receipt(tx_hash)
+
+    def _get_liquidity(self):
+        liquidity, _, _ = self._exchange_contract.functions.getMakerInfo(
+            self._w3.eth.default_account,
+            self._market_contract.address,
+        ).call()
+        return liquidity
+
+
 def _get_deadline():
     return int(time.time()) + 2 * 60
 
