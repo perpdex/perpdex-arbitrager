@@ -182,11 +182,68 @@ def test_perpdex_orderer(w3, market_filepath, exchange_filepath, market_contract
     w3.eth.wait_for_transaction_receipt(tx_hash)
 
     # long BTC 0.01
-    orderer.post_market_order(symbol='BTC', side_int=1, size=0.01)
+    symbol = market_contract.functions.symbol().call()
+    orderer.post_market_order(symbol=symbol, side_int=1, size=0.01)
 
     assert getter.current_position() == 0.01
 
     # short BTC 0.02
-    orderer.post_market_order(symbol='BTC', side_int=-1, size=0.03)
+    orderer.post_market_order(symbol=symbol, side_int=-1, size=0.03)
 
     assert getter.current_position() == -0.02
+
+
+def test_perpdex_liquidity_rebalancer(w3, market_filepath, exchange_filepath, market_contract, exchange_contract):
+    rebalancer = perpdex.PerpdexLiquidityRebalancer(
+        w3=w3,
+        config=perpdex.PerpdexLiquidityRebalancerConfig(
+            market_contract_abi_json_filepath=market_filepath,
+            exchange_contract_abi_json_filepath=exchange_filepath,
+            target_leverage=1.0,
+            rebalance_ratio=0.5,
+        )
+    )
+
+    orderer = perpdex.PerpdexOrderer(
+        w3=w3,
+        config=perpdex.PerpdexOrdererConfig(
+            market_contract_abi_json_filepaths=[market_filepath],
+            exchange_contract_abi_json_filepath=exchange_filepath,
+        )
+    )
+
+    # mock pool info
+    tx_hash = market_contract.functions.setPoolInfo(dict(
+        base=10 * (10 ** perpdex.DECIMALS),
+        quote=1000 * (10 ** perpdex.DECIMALS),
+        totalLiquidity=1000 * (10 ** perpdex.DECIMALS),
+        cumBasePerLiquidityX96=0,
+        cumQuotePerLiquidityX96=0,
+        baseBalancePerShareX96=1 * perpdex.Q96,
+    )).transact()
+    w3.eth.wait_for_transaction_receipt(tx_hash)
+
+    # mock collateral
+    tx_hash = exchange_contract.functions.setAccountInfo(
+        w3.eth.default_account,                                # trader
+        dict(collateralBalance=1 * (10 ** perpdex.DECIMALS)),  # vaultInfo
+        [],                                                    # markets
+    ).transact()
+    w3.eth.wait_for_transaction_receipt(tx_hash)
+
+    # make -> take -> rebalance
+    rebalancer.rebalance()
+
+    symbol = market_contract.functions.symbol().call()
+    orderer.post_market_order(symbol=symbol, side_int=1, size=0.5)
+
+    rebalancer.rebalance()
+
+    # assert maker leverage is near 50%
+    liquidity, _, _ = exchange_contract.functions.getMakerInfo(
+        w3.eth.default_account,
+        market_contract.address,
+    ).call()
+    acc_quote = exchange_contract.functions.getTotalAccountValue(w3.eth.default_account).call()
+    _, liq_quote = market_contract.functions.getLiquidityValue(liquidity).call()
+    assert acc_quote * 0.5 == pytest.approx(liq_quote)
