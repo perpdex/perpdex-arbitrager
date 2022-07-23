@@ -43,7 +43,6 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./hardhat:/app
-      - ./deps:/deps
     command: sh -c "yarn install && yarn hardhat node"
     expose:
       - 8545  # hardhat localhost default port
