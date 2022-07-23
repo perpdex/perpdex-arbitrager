@@ -193,7 +193,8 @@ def test_perpdex_orderer(w3, market_filepath, exchange_filepath, market_contract
     assert getter.current_position() == -0.02
 
 
-def test_perpdex_liquidity_rebalancer(w3, market_filepath, exchange_filepath, market_contract, exchange_contract):
+@pytest.mark.parametrize('max_slippage', [1.0, 0.005])
+def test_perpdex_liquidity_rebalancer(w3, market_filepath, exchange_filepath, market_contract, exchange_contract, max_slippage):
     rebalancer = perpdex.PerpdexLiquidityRebalancer(
         w3=w3,
         config=perpdex.PerpdexLiquidityRebalancerConfig(
@@ -201,6 +202,7 @@ def test_perpdex_liquidity_rebalancer(w3, market_filepath, exchange_filepath, ma
             exchange_contract_abi_json_filepath=exchange_filepath,
             target_leverage=1.0,
             rebalance_ratio=0.5,
+            max_slippage=max_slippage,
         )
     )
 

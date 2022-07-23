@@ -163,6 +163,7 @@ class PerpdexLiquidityRebalancerConfig:
     exchange_contract_abi_json_filepath: str
     target_leverage: float
     rebalance_ratio: float
+    max_slippage: float = 1.0
 
 
 class PerpdexLiquidityRebalancer:
@@ -172,6 +173,7 @@ class PerpdexLiquidityRebalancer:
 
         assert 0 < config.rebalance_ratio <= 1
         assert 0 < config.target_leverage
+        assert 0 < config.max_slippage <= 1
 
         self._market_contract = get_contract_from_abi_json(
             w3,
@@ -195,13 +197,23 @@ class PerpdexLiquidityRebalancer:
             self._logger.info("skip rebalancer removeLiquidity because liquidity to remove is zero")
             return
 
-        self._logger.debug("rebalancer removeLiquidity liquidity = {})".format(liquidity_to_remove))
+        if self._config.max_slippage == 1.0:
+            min_base = 0
+            min_quote = 0
+        else:
+            liq_base, liq_quote = self._market_contract.functions.getLiquidityValue(liquidity_to_remove).call()
+            min_base = int(liq_base * (1 - self._config.max_slippage))
+            min_quote = int(liq_quote * (1 - self._config.max_slippage))
+
+        self._logger.debug(
+            "rebalancer removeLiquidity (liquidity, minBase, minQuote) = ({}, {}, {}))".format(
+                liquidity_to_remove, min_base, min_quote))
         method_call = self._exchange_contract.functions.removeLiquidity(dict(
             trader=self._w3.eth.default_account,
             market=self._market_contract.address,
             liquidity=liquidity_to_remove,
-            minBase=0,
-            minQuote=0,
+            minBase=min_base,
+            minQuote=min_quote,
             deadline=_get_deadline(),
         ))
 
@@ -230,17 +242,22 @@ class PerpdexLiquidityRebalancer:
         base = target_base - liq_base
         quote = target_quote - liq_quote
 
-        if base < 0 or quote < 0:
+        if base <= 0 or quote <= 0:
             self._logger.info("Skip rebalancer addLiquidity (base, quote) = ({}, {})".format(base, quote))
             return
 
-        self._logger.debug("rebalancer addLiquidity (base, quote) = ({}, {})".format(base, quote))
+        min_base = int(base * (1 - self._config.max_slippage))
+        min_quote = int(quote * (1 - self._config.max_slippage))
+
+        self._logger.debug(
+            "rebalancer addLiquidity (base, quote, minBase, minQuote) = ({}, {}, {}, {})".format(
+                base, quote, min_base, min_quote))
         tx_hash = self._exchange_contract.functions.addLiquidity(dict(
             market=self._market_contract.address,
             base=base,
             quote=quote,
-            minBase=0,
-            minQuote=0,
+            minBase=min_base,
+            minQuote=min_quote,
             deadline=_get_deadline(),
         )).transact()
         self._w3.eth.wait_for_transaction_receipt(tx_hash)
