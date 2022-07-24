@@ -150,7 +150,7 @@ def create_arbitrager(client_set1: ExchangeClientSet, client_set2: ExchangeClien
         liquidity_rebalancer=client_set1.liquidity_rebalancer,
         config=ArbitragerConfig(
             trade_loop_sec=float(os.getenv('TRADE_LOOP_SEC', '1')),
-            rebalance_loop_sec=float(os.getenv('MAKER_LOOP_SEC', '300')),
+            rebalance_loop_sec=float(os.getenv('MAKER_LOOP_SEC', '14400')),
             inverse=inverse,
         ),
     )
