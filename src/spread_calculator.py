@@ -1,3 +1,5 @@
+from logging import getLogger
+
 
 class IPriceGetter:
     def bid_price(self) -> float:
@@ -12,6 +14,8 @@ class TakeTakeSpreadCalculator:
         self._price_getter1 = price_getter1
         self._price_getter2 = price_getter2
         self._inverse = inverse
+
+        self._logger = getLogger(__class__.__name__)
 
     def spread(self) -> float:
         # short 2, long 1
@@ -32,11 +36,13 @@ class TakeTakeSpreadCalculator:
     def _bid2_ask1_spread_rate(self):
         bid2 = self._transform_price2(self._price_getter2.bid_price())
         ask1 = self._price_getter1.ask_price()
+        self._logger.debug(f"{bid2=}, {ask1=}, {1/bid2=}, {1/ask1=}")
         return bid2 / ask1 - 1
 
     def _bid1_ask2_spread_rate(self):
         bid1 = self._price_getter1.bid_price()
         ask2 = self._transform_price2(self._price_getter2.ask_price())
+        self._logger.debug(f"{bid1=}, {ask2=}, {1/bid1=}, {1/ask2=}")
         return bid1 / ask2 - 1
 
     def _transform_price2(self, price):
