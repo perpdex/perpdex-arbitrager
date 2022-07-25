@@ -1,0 +1,23 @@
+version: "3.8"
+services:
+  py-zksync2-testnet:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      - USER_PRIVATE_KEY
+      # - WEB3_PROVIDER_URI=https://zksync2-testnet.zksync.dev
+      - WEB3_PROVIDER_URI=wss://zksync2-testnet.zksync.dev/ws
+      - WEB3_NETWORK_NAME=zksync2_testnet
+      - PERPDEX_CONTRACT_ABI_JSON_DIRPATH=/app/deps/perpdex-contract/deployments/zksync2_testnet/
+      - PERPDEX_MARKET=USD
+      - BINANCE_SYMBOL=ETHUSDT
+      - ONE_SIDE_ARB=1
+    command: python main.py run
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "32m"
