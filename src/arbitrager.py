@@ -1,8 +1,9 @@
 import asyncio
+import sys
 from dataclasses import dataclass
 from logging import getLogger
-import sys
 from typing import Optional
+
 
 class ITargetPosCalculator:
     def target_pos(self) -> float:
@@ -14,9 +15,15 @@ class IPositionChaser:
         ...
 
 
+class ILiquidityRebalancer:
+    def rebalance(self):
+        ...
+
+
 @dataclass
 class ArbitragerConfig:
     trade_loop_sec: int
+    rebalance_loop_sec: int
     inverse: bool
 
 
@@ -27,21 +34,24 @@ class Arbitrager:
             target_pos_calculator: ITargetPosCalculator,
             position_chaser1: IPositionChaser,
             position_chaser2: Optional[IPositionChaser],
+            liquidity_rebalancer: ILiquidityRebalancer,
     ):
         self._config = config
         self._target_pos_calculator = target_pos_calculator
         self._position_chaser1 = position_chaser1
         self._position_chaser2 = position_chaser2
-        self._logger = getLogger(__name__)
+        self._liquidity_rebalancer = liquidity_rebalancer
+        self._logger = getLogger(__class__.__name__)
 
-        self._task: asyncio.Task = None
+        self._task_t: asyncio.Task = None
 
     def health_check(self) -> bool:
-        return not self._task.done()
+        return (not self._task_m.done()) and (not self._task_t.done())
 
     def start(self):
         self._logger.debug('start')
-        self._task = asyncio.create_task(self._trade())
+        self._task_t = asyncio.create_task(self._trade())
+        self._task_m = asyncio.create_task(self._rebalance())
 
     async def _trade(self):
         self._logger.debug('_trade')
@@ -58,8 +68,17 @@ class Arbitrager:
                 await asyncio.gather(*tasks)
 
                 await asyncio.sleep(self._config.trade_loop_sec)
-        except:
-            self._logger.error(sys.exc_info())
+        except BaseException:
+            self._logger.error(sys.exc_info(), exc_info=True)
+        
+    async def _rebalance(self):
+        self._logger.debug('_rebalance')
+        try:
+            while True:
+                self._liquidity_rebalancer.rebalance()
+                await asyncio.sleep(self._config.rebalance_loop_sec)
+        except BaseException:
+            self._logger.error(sys.exc_info(), exc_info=True)
 
     def _calc_target_pos2(self, target_pos):
         # TODO: convert share to amount
