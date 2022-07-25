@@ -11,3 +11,6 @@ handlers:
 root:
   level: INFO
   handlers: [stream]
+loggers:
+  ccxt.base.exchange:
+    level: INFO
