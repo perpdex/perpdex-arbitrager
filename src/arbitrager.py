@@ -70,7 +70,7 @@ class Arbitrager:
                 await asyncio.sleep(self._config.trade_loop_sec)
         except BaseException:
             self._logger.error(sys.exc_info(), exc_info=True)
-        
+
     async def _rebalance(self):
         self._logger.debug('_rebalance')
         try:

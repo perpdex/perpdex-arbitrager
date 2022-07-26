@@ -1,5 +1,5 @@
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from logging import getLogger
 import os
 import sys
@@ -14,6 +14,7 @@ from .types import IPriceGetter
 class DebugPriceFeedReporterConfig:
     price_feed_contract_abi_json_filepath: str
     loop_sec: float
+    tx_options: dict = field(default_factory=dict)
 
 
 class DebugPriceFeedReporter:
@@ -27,6 +28,7 @@ class DebugPriceFeedReporter:
         self._price_getter = price_getter
         self._logger = getLogger(__class__.__name__)
         self._contract = get_contract_from_abi_json(w3, config.price_feed_contract_abi_json_filepath)
+        self._w3 = w3
 
         self._task: asyncio.Task = None
 
@@ -50,7 +52,7 @@ class DebugPriceFeedReporter:
 
     def _report_price(self, price):
         self._logger.info('report price {}'.format(price))
-        tx_hash = self._contract.functions.setPrice(int(price * 10**18)).transact()
+        tx_hash = self._contract.functions.setPrice(int(price * 10**18)).transact(self._config.tx_options)
         self._w3.eth.wait_for_transaction_receipt(tx_hash)
 
 
@@ -76,7 +78,10 @@ def create_debug_price_feed_reporter():
     return DebugPriceFeedReporter(
         config=DebugPriceFeedReporterConfig(
             price_feed_contract_abi_json_filepath=os.getenv('PERPDEX_DEBUG_PRICE_FEED_PATH'),
-            loop_sec=60 * 60
+            loop_sec=60 * 60,
+            tx_options={
+                'gasPrice': 0, # EIP1559 not supported https://v2-docs.zksync.io/api/api.html
+            },
         ),
         w3=w3,
         price_getter=price_getter
