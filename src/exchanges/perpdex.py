@@ -207,7 +207,7 @@ class PerpdexLiquidityRebalancer:
             min_base = int(liq_base * (1 - self._config.max_slippage))
             min_quote = int(liq_quote * (1 - self._config.max_slippage))
 
-        self._logger.debug(
+        self._logger.info(
             "rebalancer removeLiquidity (liquidity, minBase, minQuote) = ({}, {}, {}))".format(
                 liquidity_to_remove, min_base, min_quote))
         method_call = self._exchange_contract.functions.removeLiquidity(dict(
@@ -251,7 +251,7 @@ class PerpdexLiquidityRebalancer:
         min_base = int(base * (1 - self._config.max_slippage))
         min_quote = int(quote * (1 - self._config.max_slippage))
 
-        self._logger.debug(
+        self._logger.info(
             "rebalancer addLiquidity (base, quote, minBase, minQuote) = ({}, {}, {}, {})".format(
                 base, quote, min_base, min_quote))
         tx_hash = self._exchange_contract.functions.addLiquidity(dict(
