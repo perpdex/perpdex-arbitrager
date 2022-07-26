@@ -21,6 +21,7 @@ services:
       driver: "json-file"
       options:
         max-size: "32m"
+    restart: always
 
   py-zksync2-testnet-price-reporter:
     build:
@@ -41,3 +42,4 @@ services:
       driver: "json-file"
       options:
         max-size: "32m"
+    restart: always
