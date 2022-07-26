@@ -1,0 +1,6 @@
+class IPriceGetter:
+    def bid_price(self) -> float:
+        ...
+
+    def ask_price(self) -> float:
+        ...

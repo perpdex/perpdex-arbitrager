@@ -1,12 +1,5 @@
 from logging import getLogger
-
-
-class IPriceGetter:
-    def bid_price(self) -> float:
-        ...
-
-    def ask_price(self) -> float:
-        ...
+from .types import IPriceGetter
 
 
 class TakeTakeSpreadCalculator:
