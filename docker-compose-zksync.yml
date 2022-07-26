@@ -21,3 +21,23 @@ services:
       driver: "json-file"
       options:
         max-size: "32m"
+
+  py-zksync2-testnet-price-reporter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      - USER_PRIVATE_KEY
+      # - WEB3_PROVIDER_URI=https://zksync2-testnet.zksync.dev
+      - WEB3_PROVIDER_URI=wss://zksync2-testnet.zksync.dev/ws
+      - WEB3_NETWORK_NAME=zksync2_testnet
+      - PERPDEX_DEBUG_PRICE_FEED_PATH=/app/deps/perpdex-contract/deps/perpdex-oracle-contract/deployments/zksync2_testnet/DebugPriceFeedETHUSD.json
+      - BINANCE_SYMBOL=ETHUSDT
+    command: python main.py run_debug_price_feed_reporter
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "32m"

@@ -5,12 +5,9 @@ from logging import getLogger, config
 
 from src import resolver
 from src.debug import setCollateralBalance, printAccountInfo
+from src.debug_price_feed_reporter import create_debug_price_feed_reporter
 
 async def main(restart):
-    with open("main_logger_config.yml", encoding='UTF-8') as f:
-        y = yaml.safe_load(f.read())
-        config.dictConfig(y)
-
     logger = getLogger(__name__)
     logger.info('start')
 
@@ -28,12 +25,31 @@ async def main(restart):
 
     logger.warning('exit')
 
+
+async def main_debug_price_feed_reporter():
+    logger = getLogger(__name__)
+    logger.info('start')
+
+    bot = create_debug_price_feed_reporter()
+
+    bot.start()
+    while bot.health_check():
+        logger.debug('health check ok')
+        await asyncio.sleep(30)
+
+    logger.warning('exit')
+
+
 class Cli:
     """arbitrage bot for perpdex"""
 
     def run(self, restart: bool=False):
         """run arbitrage bot"""
         asyncio.run(main(restart))
+
+    def run_debug_price_feed_reporter(self):
+        """run arbitrage bot"""
+        asyncio.run(main_debug_price_feed_reporter())
 
     def setCollateralBalance(self, balance, account=None):
         """call setCollateralBalance (for testnet)"""
@@ -45,4 +61,8 @@ class Cli:
         printAccountInfo(account)
 
 if __name__ == '__main__':
+    with open("main_logger_config.yml", encoding='UTF-8') as f:
+        y = yaml.safe_load(f.read())
+        config.dictConfig(y)
+
     fire.Fire(Cli)
