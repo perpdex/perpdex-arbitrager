@@ -75,6 +75,10 @@ def create_perpdex_client_set():
     abi_json_dirpath = os.getenv('PERPDEX_CONTRACT_ABI_JSON_DIRPATH', '/app/deps/perpdex-contract/deployments/' + web3_network_name)
     _market_contract_filepath = os.path.join(abi_json_dirpath, 'PerpdexMarket{}.json'.format(market_name))
     _exchange_contract_filepath = os.path.join(abi_json_dirpath, 'PerpdexExchange.json')
+    eip1559_disbled = 'zksync' in web3_network_name
+    tx_options = {}
+    if eip1559_disbled:
+        tx_options['gasPrice'] = 0
 
     position_getter = perpdex.PerpdexPositionGetter(
         w3=_w3,
@@ -98,6 +102,7 @@ def create_perpdex_client_set():
             market_contract_abi_json_filepaths=[_market_contract_filepath],
             exchange_contract_abi_json_filepath=_exchange_contract_filepath,
             max_slippage=float(os.getenv('PERPDEX_MAX_SLIPPAGE', '0.005')),
+            tx_options=tx_options,
         )
     )
 
@@ -117,6 +122,7 @@ def create_perpdex_client_set():
             target_leverage=float(os.getenv('MAKER_LEVERAGE', '1.0')),
             rebalance_ratio=float(os.getenv('MAKER_REBALANCE_RATIO', '0.5')),
             max_slippage=float(os.getenv('MAKER_MAX_SLIPPAGE', '0.005')),
+            tx_options=tx_options,
         )
     )
 

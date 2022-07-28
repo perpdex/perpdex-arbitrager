@@ -19,7 +19,7 @@ def printAccountInfo(account):
 
 
 def setCollateralBalance(balance, account):
-    w3 = _create_w3()
+    w3, tx_options = _create_w3()
     exchange_contract = _create_exchange_contract(w3)
 
     if account is None:
@@ -28,17 +28,21 @@ def setCollateralBalance(balance, account):
     tx_hash = exchange_contract.functions.setCollateralBalance(
         account,
         balance * 10**18,
-    ).transact()
+    ).transact(tx_options)
     w3.eth.wait_for_transaction_receipt(tx_hash)
 
 
 def _create_w3():
     web3_network_name = os.environ['WEB3_NETWORK_NAME']
+    eip1559_disbled = 'zksync' in web3_network_name
+    tx_options = {}
+    if eip1559_disbled:
+        tx_options['gasPrice'] = 0
     return get_w3(
         network_name=web3_network_name,
         web3_provider_uri=os.environ['WEB3_PROVIDER_URI'],
         user_private_key=os.environ['USER_PRIVATE_KEY'],
-    )
+    ), tx_options
 
 def _create_exchange_contract(w3):
     web3_network_name = os.environ['WEB3_NETWORK_NAME']

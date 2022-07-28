@@ -1,6 +1,6 @@
 from logging import getLogger
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 from ..contracts.utils import get_contract_from_abi_json
 
@@ -51,6 +51,7 @@ class PerpdexOrdererConfig:
     market_contract_abi_json_filepaths: list
     exchange_contract_abi_json_filepath: str
     max_slippage: Optional[float] = None
+    tx_options: dict = field(default_factory=dict)
 
 
 class PerpdexOrderer:
@@ -117,7 +118,7 @@ class PerpdexOrderer:
                 self._logger.debug(f'estimateGas raises {e=} retrying')
                 continue
 
-            tx_hash = method_call.transact()
+            tx_hash = method_call.transact(self._config.tx_options)
             self._w3.eth.wait_for_transaction_receipt(tx_hash)
             break
 
@@ -164,6 +165,7 @@ class PerpdexLiquidityRebalancerConfig:
     target_leverage: float
     rebalance_ratio: float
     max_slippage: float = 1.0
+    tx_options: dict = field(default_factory=dict)
 
 
 class PerpdexLiquidityRebalancer:
@@ -205,7 +207,7 @@ class PerpdexLiquidityRebalancer:
             min_base = int(liq_base * (1 - self._config.max_slippage))
             min_quote = int(liq_quote * (1 - self._config.max_slippage))
 
-        self._logger.debug(
+        self._logger.info(
             "rebalancer removeLiquidity (liquidity, minBase, minQuote) = ({}, {}, {}))".format(
                 liquidity_to_remove, min_base, min_quote))
         method_call = self._exchange_contract.functions.removeLiquidity(dict(
@@ -223,14 +225,14 @@ class PerpdexLiquidityRebalancer:
             self._logger.info("rebalancer removeLiquidity estimateGas failed: {}".format(e))
             return
 
-        tx_hash = method_call.transact()
+        tx_hash = method_call.transact(self._config.tx_options)
         self._w3.eth.wait_for_transaction_receipt(tx_hash)
 
     def _add_liquidity(self):
         account_value = self._exchange_contract.functions.getTotalAccountValue(
             self._w3.eth.default_account,
         ).call()
- 
+
         share_price = self._market_contract.functions.getShareMarkPriceX96().call() / Q96
 
         target_quote = int(account_value * (self._config.target_leverage / 2))
@@ -249,7 +251,7 @@ class PerpdexLiquidityRebalancer:
         min_base = int(base * (1 - self._config.max_slippage))
         min_quote = int(quote * (1 - self._config.max_slippage))
 
-        self._logger.debug(
+        self._logger.info(
             "rebalancer addLiquidity (base, quote, minBase, minQuote) = ({}, {}, {}, {})".format(
                 base, quote, min_base, min_quote))
         tx_hash = self._exchange_contract.functions.addLiquidity(dict(
@@ -259,7 +261,7 @@ class PerpdexLiquidityRebalancer:
             minBase=min_base,
             minQuote=min_quote,
             deadline=_get_deadline(),
-        )).transact()
+        )).transact(self._config.tx_options)
         self._w3.eth.wait_for_transaction_receipt(tx_hash)
 
     def _get_liquidity(self):
