@@ -11,6 +11,8 @@ def get_tx_options(network_name: str):
         tx_options['gasPrice'] = 0
     elif 'arbitrum' in network_name:
         tx_options['gasPrice'] = Web3.toWei('0.1', 'gwei')
+    elif 'optimism' in network_name:
+        tx_options['gasPrice'] = Web3.toWei('0.0001', 'gwei')
 
     return tx_options
 

@@ -1,0 +1,23 @@
+version: "3.8"
+services:
+  py-optimism-kovan:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      - USER_PRIVATE_KEY
+      - WEB3_PROVIDER_URI=https://kovan.optimism.io
+      - WEB3_NETWORK_NAME=optimism_kovan
+      - PERPDEX_CONTRACT_ABI_JSON_DIRPATH=/app/deps/perpdex-contract/deployments/optimism_kovan/
+      - PERPDEX_MARKET=USD
+      - BINANCE_SYMBOL=ETHUSDT
+      - ONE_SIDE_ARB=1
+    command: python main.py run
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "32m"
+    restart: always
