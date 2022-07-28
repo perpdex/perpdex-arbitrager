@@ -1,5 +1,5 @@
 import os
-from .contracts.utils import get_w3, get_contract_from_abi_json
+from .contracts.utils import get_w3, get_tx_options, get_contract_from_abi_json
 
 
 def printAccountInfo(account):
@@ -34,15 +34,11 @@ def setCollateralBalance(balance, account):
 
 def _create_w3():
     web3_network_name = os.environ['WEB3_NETWORK_NAME']
-    eip1559_disbled = 'zksync' in web3_network_name
-    tx_options = {}
-    if eip1559_disbled:
-        tx_options['gasPrice'] = 0
     return get_w3(
         network_name=web3_network_name,
         web3_provider_uri=os.environ['WEB3_PROVIDER_URI'],
         user_private_key=os.environ['USER_PRIVATE_KEY'],
-    ), tx_options
+    ), get_tx_options(web3_network_name)
 
 def _create_exchange_contract(w3):
     web3_network_name = os.environ['WEB3_NETWORK_NAME']

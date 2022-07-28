@@ -5,7 +5,7 @@ import ccxt
 
 from .arbitrager import (Arbitrager, ArbitragerConfig, ILiquidityRebalancer,
                          IPositionChaser)
-from .contracts.utils import get_w3
+from .contracts.utils import get_w3, get_tx_options
 from .exchanges import binance, perpdex
 from .position_chaser import (IPositionGetter, TakePositionChaser,
                               TakePositionChaserConfig)
@@ -75,10 +75,7 @@ def create_perpdex_client_set():
     abi_json_dirpath = os.getenv('PERPDEX_CONTRACT_ABI_JSON_DIRPATH', '/app/deps/perpdex-contract/deployments/' + web3_network_name)
     _market_contract_filepath = os.path.join(abi_json_dirpath, 'PerpdexMarket{}.json'.format(market_name))
     _exchange_contract_filepath = os.path.join(abi_json_dirpath, 'PerpdexExchange.json')
-    eip1559_disbled = 'zksync' in web3_network_name
-    tx_options = {}
-    if eip1559_disbled:
-        tx_options['gasPrice'] = 0
+    tx_options = get_tx_options(web3_network_name)
 
     position_getter = perpdex.PerpdexPositionGetter(
         w3=_w3,

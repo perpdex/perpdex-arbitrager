@@ -5,6 +5,15 @@ from web3 import Web3
 from web3.middleware import (construct_sign_and_send_raw_middleware,
                              geth_poa_middleware)
 
+def get_tx_options(network_name: str):
+    tx_options = {}
+    if 'zksync' in network_name:
+        tx_options['gasPrice'] = 0
+    elif 'arbitrum' in network_name:
+        tx_options['gasPrice'] = Web3.toWei('0.1', 'gwei')
+
+    return tx_options
+
 
 def get_w3(network_name: str, web3_provider_uri: str, user_private_key: str = None):
     if web3_provider_uri.startswith('wss://'):
