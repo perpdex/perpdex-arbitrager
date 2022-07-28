@@ -1,0 +1,23 @@
+version: "3.8"
+services:
+  py-mumbai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      - USER_PRIVATE_KEY
+      - WEB3_PROVIDER_URI=https://rpc-mumbai.maticvigil.com
+      - WEB3_NETWORK_NAME=mumbai
+      - PERPDEX_CONTRACT_ABI_JSON_DIRPATH=/app/deps/perpdex-contract/deployments/mumbai/
+      - PERPDEX_MARKET=USD
+      - BINANCE_SYMBOL=MATICUSDT
+      - ONE_SIDE_ARB=1
+    command: python main.py run
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "32m"
+    restart: always
